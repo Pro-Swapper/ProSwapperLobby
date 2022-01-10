@@ -1,0 +1,548 @@
+﻿@page "/lobbyswapper"
+@using Microsoft.AspNetCore.WebUtilities
+@inject MainService main
+@inject NavigationManager NavManager
+@inject IToastService toastService
+
+<div class="alert alert-danger" role="alert">
+  All these @currentItemType are LOBBY ONLY. They will show to other players however they will not work ingame!
+  <br />
+</div>
+
+
+<h3>Skins Lobby Swapping</h3>
+
+
+@if (curSelect == SelectionMode.Main)
+{
+    <div class="card-group">
+        <div class="col-sm-3">
+            <div class="card text-white m-1 mx-auto" style="width:auto;height:auto;background:#486581">
+                <div class="card-header text-center" style="font-size:small">@SwapsFromSkin.name<div class="text-start" style="font-size:small;color:#9Fb3C8;height:10px">@SwapsFromSkin.id</div></div>
+                <div class="card-body text-center align-content-center">
+                    <img class="card-img-top" src="@SwapsFromSkin.images.icon" style="width:90%; height:auto;@SwapsFromSkin.rarity.bgcss">
+                </div>
+                <div class="card-footer text-center">
+                    <a class="btn btn-outline-light" @onclick="(() => SkinSelectMode(SelectedSlot.SwapsFrom))" style="margin-top:10px">Select @currentItemType you own</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="card text-white m-1" style="width:auto;height:auto;background:#486581">
+                <div class="card-body text-center align-content-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="60%" height="auto" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z" />
+                    </svg>
+                </div>
+                @if (!SwapsFromSkin.id.StartsWith("ITEM_ID") && !SwapsToSkin.id.StartsWith("ITEM_ID"))
+                {
+                    <div class="card-footer text-center">@SwapsFromSkin.name To @SwapsToSkin.name</div>
+                }
+            </div>
+        </div>
+        <div class="col-sm-3">
+            <div class="card text-white m-1" style="width:auto;height:auto;background:#486581">
+                <div class="card-header text-center" style="font-size:small">@SwapsToSkin.name<div class="text-start" style="font-size:small;color:#9Fb3C8;height:10px">@SwapsToSkin.id</div></div>
+                <div class="card-body text-center align-content-center">
+                    <img class="card-img-top" src="@SwapsToSkin.images.icon" style="width:90%; height:auto;@SwapsToSkin.rarity.bgcss">
+                </div>
+                <div class="card-footer text-center">
+                    <a class="btn btn-outline-light" @onclick="(() => SkinSelectMode(SelectedSlot.SwapsTo))" style="margin-top:10px">Select @currentItemType you want</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (DisableButtons == false)
+    {
+        @if (!SwapsFromSkin.id.StartsWith("ITEM_ID") && !SwapsToSkin.id.StartsWith("ITEM_ID"))
+        {
+            <div class="btn-group-vertical" style="margin-left:38%">
+                <button class="convert convertcolor" @onclick="() => ConvertSkin()">Convert</button><br>
+                <button class="convert revertcolor" @onclick="() => RevertSkin()">Revert</button><br>
+                <button class="refresh" style="margin-left:-50%" @onclick="() => Reset()"><span>Reset</span></button>
+            </div>
+        }
+        else
+        {
+            <div class="btn-group-vertical" style="margin-left:38%">
+                <button class="convertbtnpos" type="button" disabled>Convert</button><br />
+                <button class="convertbtnpos" type="button" disabled>Revert</button>
+            </div>
+        }
+
+    }
+
+if (DisableButtons == true)
+    {
+          <div class="btn-group-vertical" style="margin-left:38%">
+        <button class="convertbtnpos" type="button" disabled>Convert</button><br />
+        <button class="convertbtnpos" type="button" disabled>Revert</button>
+        </div>
+    }
+
+
+    <button class="convert revertcolor" style="position:fixed;left:20%;bottom:0" @onclick="() => ResetAll()">Reset All Lobby Items</button><br>
+}
+else if (curSelect == SelectionMode.SkinSelect)
+{
+
+    <p>Search: <input type="text" placeholder="Renegade Raider, CID_028_Athena_Commando_F" @bind-value="SearchTerm" @bind-value:event="oninput" style="width:30vw" /></p>
+    
+
+        @if (curSlot == SelectedSlot.SwapsFrom)
+        {
+             @if (!SwapsToSkin.id.StartsWith("ITEM_ID"))
+                {
+            <p>Showing @currentItemType compatible to swap to @SwapsToSkin.name</p>
+        }
+        else
+        {
+            SwapsToSkin.id = "ITEM_ID";
+        }
+
+            <div class="card-group">
+        @foreach (var skin in FilteredSkins.Where(x => x.id.Length >= SwapsToSkin.id.Length))
+        {
+            @if (skin.id == SwapsToSkin.id)
+            {
+                    continue;
+                }
+
+            <div class="col-md-2">
+                <div class="card text-white" style="width:auto;height:auto;background:#486581;margin:2px">
+                    <div class="card-header text-center" style="font-size:small">@skin.name<div class="text-start" style="font-size:x-small;color:#9Fb3C8;height:10px">@skin.id</div></div>
+
+                    <div class="card-body text-center align-content-center">
+                        <img class="card-img-top" src="@skin.images.smallIcon" style="width:50%; height:auto;@skin.rarity.bgcss">
+                    </div>
+                    <div class="card-footer text-center">
+                        <a class="btn btn-outline-light" @onclick="(() => SelectSkin(skin))">Select</a>
+                    </div>
+                </div>
+            </div>
+        }
+        </div>
+        }
+        else if (curSlot == SelectedSlot.SwapsTo)
+        {
+            @if (!SwapsFromSkin.id.StartsWith("ITEM_ID"))
+                {
+                   <p>Showing skins compatible to swap from @SwapsFromSkin.name</p>
+                }
+
+                <div class="card-group">
+        @foreach (var skin in FilteredSkins.Where(x => x.id.Length <= SwapsFromSkin.id.Length))
+        {
+             @if (skin.id == SwapsFromSkin.id)
+            {
+                    continue;
+                }
+            <div class="col-md-2">
+                <div class="card text-white" style="width:auto;height:auto;background:#486581;margin:2px">
+                    <div class="card-header text-center" style="font-size:small">@skin.name<div class="text-start" style="font-size:x-small;color:#9Fb3C8;height:10px">@skin.id</div></div>
+
+                    <div class="card-body text-center align-content-center">
+                        <img class="card-img-top" src="@skin.images.smallIcon" style="width:50%; height:auto;@skin.rarity.bgcss">
+                    </div>
+                    <div class="card-footer text-center">
+                        <a class="btn btn-outline-light" @onclick="(() => SelectSkin(skin))">Select</a>
+                    </div>
+                </div>
+            </div>
+        }
+        </div>
+        }
+}
+
+<style>
+
+     button.convertbtnpos{
+	 transform: translateX(-50%) translateY(-50%);
+     color:#ccc;
+     opacity: 0.3;
+	 width: 200px;
+     background:#486581;
+	 height: 60px;
+	 border: 0;
+	 font-size: 18px;
+	 border-radius: 4px;
+	 font-family: 'Raleway', sans-serif;
+	 transition: 0.6s;
+	 overflow: hidden;
+}
+
+ button.convert{
+	 transform: translateX(-50%) translateY(-50%);
+     background: #486581;
+	 color: #ccc;
+	 width: 200px;
+	 height: 60px;
+	 border: 0;
+	 font-size: 18px;
+	 border-radius: 4px;
+	 font-family: 'Raleway', sans-serif;
+	 transition: 0.6s;
+	 overflow: hidden;
+}
+ button.convert:focus {
+	 outline: 0;
+}
+ button.convert:before {
+	 content: '';
+	 display: block;
+	 position: absolute;
+	 background: rgba(255, 255, 255, 0.5);
+	 width: 60px;
+	 height: 100%;
+	 left: 0;
+	 top: 0;
+	 opacity: 0.5;
+	 filter: blur(30px);
+	 transform: translateX(-100px) skewX(-15deg);
+}
+ button.convert:after {
+	 content: '';
+	 display: block;
+	 position: absolute;
+	 background: rgba(255, 255, 255, 0.2);
+	 width: 30px;
+	 height: 100%;
+	 left: 30px;
+	 top: 0;
+	 opacity: 0;
+	 filter: blur(5px);
+	 transform: translateX(-100px) skewX(-15deg);
+}
+ button.convert.convertcolor:hover {
+	 background: #338033;
+}
+
+button.convert.revertcolor:hover {
+	 background: #f02b2b;
+}
+ button.convert:hover:before {
+	 transform: translateX(300px) skewX(-15deg);
+	 opacity: 0.6;
+	 transition: 0.7s;
+}
+ button.convert:hover:after {
+	 transform: translateX(300px) skewX(-15deg);
+	 opacity: 1;
+	 transition: 0.7s;
+}
+
+button.refresh {
+  border-radius: 4px;
+  background-color: #00ad1d;
+  border: none;
+  color: #FFFFFF;
+  text-align: center;
+  font-size: 20px;
+  padding: 20px;
+  width: 200px;
+  transition: all 0.5s;
+  cursor: pointer;
+}
+
+button.refresh span {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+button.refresh span:after {
+  content: '\0027f3';
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: -20px;
+  transition: 0.5s;
+}
+
+button.refresh:hover span {
+  padding-right: 25px;
+}
+
+button.refresh:hover span:after {
+  opacity: 1;
+  right: 0;
+}
+</style>
+@code {
+    private static Data.SkinObj.Datum SwapsFromSkin { get; set; }
+    private static Data.SkinObj.Datum SwapsToSkin { get; set; }
+
+    private static string SearchTerm { get; set; } = "";
+    private static bool DisableButtons { get; set; } = false;
+
+
+    private enum ItemType
+    {
+        Skins,
+        Backblings,
+        Emotes,
+        Pickaxes,
+        Music
+    }
+
+    private ItemType currentItemType;
+
+    Data.SkinObj.Datum[] FilteredSkins
+    {
+        get
+        {
+            string SearchString = SearchTerm.ToLower();
+            Data.SkinObj.Datum[] FilteredSkinsList = null;
+
+            Data.SkinObj.Datum[] ItemSource = null;
+            switch (currentItemType)
+            {
+                case ItemType.Skins:ItemSource = main.skinObj.data;
+                    break;
+
+                case ItemType.Backblings:ItemSource = main.backblingObj.data;
+                    break;
+
+                case ItemType.Emotes:ItemSource = main.emotesObj.data;
+                    break;
+
+                case ItemType.Pickaxes:ItemSource = main.pickaxeObj.data;
+                    break;
+
+                case ItemType.Music:ItemSource = main.musicObj.data;
+                    break;
+            }
+            FilteredSkinsList = new Data.SkinObj.Datum[ItemSource.Length];
+
+
+
+
+            for (var i = 0; i < ItemSource.Length; i++)
+            {
+                if (ItemSource[i].id.Contains("_Random"))
+                    continue;//We don't want CID_Random, etc
+
+
+                if (ItemSource[i].id.ToLower().Contains(SearchString) || ItemSource[i].name.ToLower().Contains(SearchString))
+                {
+                    FilteredSkinsList[i] = ItemSource[i];
+                    switch (FilteredSkinsList[i].rarity.value)
+                    {
+                        case "common":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#bebebe, #646464);background: radial-gradient(#bebebe, #646464);border: 3px solid #b1b1b1;overflow: hidden";
+                            break; 
+
+                        case "uncommon":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#6abb1e, #175117);	background: radial-gradient(#6abb1e, #175117);	border: 3px solid #88e339;	overflow: hidden";
+                            break;
+                        case "rare":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#2cc0ff, #143877);	background: radial-gradient(#2cc0ff, #143877);	border: 3px solid #37d0ff;	overflow: hidden";
+                            break;
+
+                        case "epic":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#c359ff, #4c2483);	background: radial-gradient(#c359ff, #4c2483);	border: 3px solid #ea5eff;	overflow: hidden";
+                            break;
+
+                        case "legendary":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#ea8d23, #78371d);	background: radial-gradient(#ea8d23, #78371d);	border: 3px solid #e98d4b;	overflow: hidden";
+                            break;
+
+                        case "dark":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#fb22df, #520c6f);	background: radial-gradient(#fb22df, #520c6f);	border: 3px solid #ff42e7;	overflow: hidden";
+                            break;
+
+                        case "frozen":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#94dfff, #269ed6);	background: radial-gradient(#94dfff, #269ed6);	border: 3px solid #c4dff7;	overflow: hidden";
+                            break;
+
+                        case "icon":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#36b7b7, #256b6b);	background: radial-gradient(#36b7b7, #256b6b);	border: 3px solid #52e0e0;	overflow: hidden";
+                            break;
+
+                        case "lava":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#ea8d23, #6a0a31);	background: radial-gradient(#ea8d23, #6a0a31);	border: 3px solid #d19635;	overflow: hidden";
+                            break;
+
+                        case "marvel":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#c53333, #761b1b);	background: radial-gradient(#c53333, #761b1b);	border: 3px solid #ef3537;	overflow: hidden";
+                            break;
+
+                        case "shadow":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#717171, #191919);	background: radial-gradient(#717171, #191919);	border: 3px solid #949494;	overflow: hidden";
+                            break;
+
+                        case "gaminglegends":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden";
+                            break;
+
+                        case "dc":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#5475c7, #243461);	background: radial-gradient(#5475c7, #243461);	border: 3px solid #6094ce;	overflow: hidden";
+                            break;
+
+                        case "slurp":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#29f1a3, #12a9a4);	background: radial-gradient(#29f1a3, #12a9a4);	border: 3px solid #53f0ff;	overflow: hidden";
+                            break;
+
+                        case "starwars":
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#1b366e, #081737);	background: radial-gradient(#1b366e, #081737);	border: 3px solid #e7c413;	overflow: hidden";
+                            break;
+
+                        default:
+                            FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#bebebe, #646464);background: radial-gradient(#bebebe, #646464);border: 3px solid #b1b1b1;overflow: hidden";
+                            break;
+                    }
+                }
+
+            }
+            return FilteredSkinsList.Where(x => x != null).ToArray();
+        }
+    }
+
+    enum SelectionMode
+    {
+        Main,
+        SkinSelect
+    }
+
+    enum SelectedSlot
+    {
+        SwapsFrom,
+        SwapsTo
+    }
+    SelectionMode curSelect = SelectionMode.Main;
+    SelectedSlot curSlot;
+
+
+    void SkinSelectMode(SelectedSlot selected)
+    {
+        curSelect = SelectionMode.SkinSelect;
+        curSlot = selected;
+    }
+
+    void SelectSkin(Data.SkinObj.Datum SelectedSkin)
+    {
+        if (curSlot == SelectedSlot.SwapsFrom)
+        {
+            SwapsFromSkin = SelectedSkin;
+        }
+        else if (curSlot == SelectedSlot.SwapsTo)
+        {
+            SwapsToSkin = SelectedSkin;
+        }
+        curSelect = SelectionMode.Main;
+        SearchTerm = "";
+    }
+
+
+    private async void ConvertSkin()
+    {
+        if (DisableButtons == false)
+        {
+            DisableButtons = true;
+            await InvokeAsync(StateHasChanged);
+
+            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsFromSkin, SwapsToSkin, Converting: true));
+            if (Swapped)
+            {
+                toastService.ShowSuccess($"Succesfully converted {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]");
+                MainService.CurrentConfig.swaplogs.Add(new MainService.SwapLogs(SwapsFromSkin, SwapsToSkin));
+                MainService.SaveConfig();
+            }
+            else
+            {
+                toastService.ShowError($"[Log] ERROR converting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap.");
+            }
+            DisableButtons = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async void RevertSkin()
+    {
+        if (DisableButtons == false)
+        {
+            DisableButtons = true;
+            await InvokeAsync(StateHasChanged);
+
+            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsToSkin, SwapsFromSkin));
+            if (Swapped)
+            {
+                toastService.ShowSuccess($"Succesfully reverted {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]");
+                MainService.CurrentConfig.swaplogs.Remove(new MainService.SwapLogs(SwapsFromSkin, SwapsToSkin));
+                MainService.SaveConfig();
+            }
+            else
+            {
+                toastService.ShowError($"[Log] ERROR reverting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap.");
+            }
+            DisableButtons = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async void Reset()
+    {
+        if (DisableButtons == false)
+        {
+            DisableButtons = true;
+            await InvokeAsync(StateHasChanged);
+            toastService.ShowInfo($"Reset selected {currentItemType}");
+
+            OnInitialized();
+            DisableButtons = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async void ResetAll()
+    {
+        ProSwapperLobby.SwapperLogic.SwapLogic.ResetAllSwaps();
+        MainService.CurrentConfig.swaplogs.Clear();
+        MainService.SaveConfig();
+        toastService.ShowSuccess($"Reset all currently converted lobby items");
+    }
+
+
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs args)
+    {
+        if (QueryHelpers.ParseQuery(NavManager.ToAbsoluteUri(NavManager.Uri).Query).TryGetValue("type", out var itemTypeQuery))
+        {
+            Enum.TryParse(Convert.ToString(itemTypeQuery), out ItemType _outitemtype);
+            if (currentItemType != _outitemtype)
+            {
+                currentItemType = _outitemtype;
+                curSelect = SelectionMode.Main;
+
+                //Reset current selected stuff in slots
+                var placeHolderskin = new Data.SkinObj.Datum();
+                placeHolderskin.name = $"Please select an item";
+                placeHolderskin.id = "ITEM_ID                                                                                                                                                    ";
+                placeHolderskin.images = new Data.SkinObj.Images() { icon = "empty-icon.png", smallIcon = "empty-icon.png" };
+                placeHolderskin.rarity = new Data.SkinObj.Rarity() { value = "none", bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden"};
+        
+                SwapsFromSkin = SwapsToSkin = placeHolderskin;
+        
+                StateHasChanged();
+            }
+        }
+    }
+    protected override void OnInitialized()
+    {
+        OnLocationChanged(null, null);
+        NavManager.LocationChanged += OnLocationChanged;
+        var placeHolderskin = new Data.SkinObj.Datum();
+        placeHolderskin.name = $"Please select an item";
+        placeHolderskin.id = "ITEM_ID                                                                                                                                                    ";
+        placeHolderskin.images = new Data.SkinObj.Images() { icon = "empty-icon.png", smallIcon = "empty-icon.png" };
+        placeHolderskin.rarity = new Data.SkinObj.Rarity() { value = "none", bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden"};
+        
+        SwapsFromSkin = SwapsToSkin = placeHolderskin;
+        StateHasChanged();
+    }
+
+    
+
+    }

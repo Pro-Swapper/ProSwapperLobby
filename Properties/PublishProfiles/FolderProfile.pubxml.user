@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--
+https://go.microsoft.com/fwlink/?LinkID=208121. 
+-->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <_PublishTargetUrl>C:\Users\ProMa\Documents\GitHub\.Pro_Swapper\ProSwapperLobby\bin\Release\net6.0\publish\</_PublishTargetUrl>
+    <History>True|2022-01-08T11:16:13.0737159Z;True|2022-01-08T20:13:01.7462987+09:00;False|2022-01-08T20:12:43.2369054+09:00;False|2022-01-08T20:12:22.0086773+09:00;True|2022-01-08T20:11:09.9989797+09:00;True|2022-01-08T18:45:21.2732432+09:00;True|2022-01-03T11:02:13.0576308+09:00;True|2022-01-03T11:00:34.4633520+09:00;True|2022-01-03T10:58:27.3458382+09:00;True|2022-01-03T10:24:21.9665124+09:00;True|2022-01-03T10:16:08.1352578+09:00;</History>
+  </PropertyGroup>
+</Project>

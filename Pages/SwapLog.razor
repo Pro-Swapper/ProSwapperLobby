@@ -1,0 +1,32 @@
+﻿@page "/swaplogs"
+
+<h3>Current Swapped Items (Lobby)</h3>
+
+@if (ProSwapperLobby.Services.MainService.CurrentConfig.swaplogs.Count() == 0)
+{
+    <p>You currently have no items swapped.</p>
+}
+else
+{
+
+    <ul class="list-group">
+  
+
+    @foreach (var item in ProSwapperLobby.Services.MainService.CurrentConfig.swaplogs)
+    {
+       <button type="button" class="list-group-item list-group-item-action" style="width:50vw">@item.SwapFrom.name (@item.SwapFrom.id) To @item.SwapTo.name (@item.SwapTo.id) (Lobby)</button>
+    }
+    </ul>
+}
+
+
+@code {
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+    }
+
+}

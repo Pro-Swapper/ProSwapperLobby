@@ -1,0 +1,36 @@
+﻿@using System.Net;
+@using Newtonsoft.Json;
+@using System.Diagnostics;
+@page "/"
+
+<PageTitle>Pro Swapper Lobby</PageTitle>
+
+<h1>Welcome to Pro Swapper Lobby</h1>
+
+Select one of the tabs to start swapping!
+
+@code {
+
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        using (WebClient wc = new())
+        {
+            string data = wc.DownloadString("https://pro-swapper.github.io/api/LobbyAPI.json");
+
+            var apiresp = JsonConvert.DeserializeObject<Data.API.Rootobject>(data);
+
+            if (apiresp.Disable == true)
+            {
+                Process.GetCurrentProcess().Kill();
+            }
+        }
+
+        Directory.CreateDirectory(Services.MainService.ProSwapperFolder + "\\.Config");
+        MainService.InitConfig();
+
+    }
+
+}
