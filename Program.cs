@@ -10,6 +10,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<MainService>();
 builder.Services.AddBlazoredToast();
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -27,3 +29,4 @@ app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
 app.Run();
+Console.Clear();

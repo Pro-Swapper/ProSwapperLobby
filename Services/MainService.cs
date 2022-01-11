@@ -3,7 +3,6 @@ using System.Net;
 using Newtonsoft.Json;
 using System.Net.Http;
 using ProSwapperLobby.Data;
-using CUE4Parse;
 using System.Reflection;
 using CUE4Parse.Encryption.Aes;
 
@@ -12,9 +11,12 @@ namespace ProSwapperLobby.Services
     public class MainService
     {
         public static readonly HttpClient client = new HttpClient();
-        public static string version = Assembly.GetExecutingAssembly().GetName().Version.ToString().Substring(2, 5);
+        public static string version = Assembly.GetEntryAssembly().GetName().Version.ToString().Substring(0, 5);
         private const string FortniteAPIURL = "https://fortnite-api.com/v2";
+        public static DiscordWidgetAPI.Root DiscordWidgetAPI { get; set; }
 
+
+        #region FortniteItemAPIInstances
         private static SkinObj.Root _skinObj { get; set; } = null;
         private static SkinObj.Root _backblingObj { get; set; } = null;
         private static SkinObj.Root _emotesObj { get; set; } = null;
@@ -68,6 +70,7 @@ namespace ProSwapperLobby.Services
                 return _musicObj;
             }
         }
+        #endregion
 
         /// <summary>
         /// Input a url which responds with msgpack compressed in lz4, responds with json object which is 'T'
