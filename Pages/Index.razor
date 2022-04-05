@@ -20,9 +20,6 @@ Select one of the tabs to start swapping!
     {
         base.OnInitialized();
 
-        if (Process.GetCurrentProcess().ProcessName != "ProSwapperLobby")
-            Process.GetCurrentProcess().Kill();
-
         using (WebClient wc = new())
         {
             string data = wc.DownloadString("https://pro-swapper.github.io/api/LobbyAPI.json");
@@ -56,5 +53,4 @@ Select one of the tabs to start swapping!
         Console.WriteLine(string.Empty);
         Console.WriteLine($"If you have paid for this software, you have been scammed. It is free to download at {Services.MainService.DiscordWidgetAPI.instant_invite} and is also available on GitHub: https://github.com/Pro-Swapper");
     }
-
 }

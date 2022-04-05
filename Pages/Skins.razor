@@ -5,8 +5,8 @@
 @inject IToastService toastService
 
 <div class="alert alert-danger" role="alert">
-  All these @currentItemType are LOBBY ONLY. They will show to other players however they will not work ingame!
-  <br />
+    All these @currentItemType are LOBBY ONLY. They will show to other players however they will not work ingame!
+    <br />
 </div>
 
 
@@ -73,27 +73,28 @@
 
     }
 
-if (DisableButtons == true)
+    if (DisableButtons == true)
     {
-          <div class="btn-group-vertical" style="margin-left:38%">
-        <button class="convertbtnpos" type="button" disabled>Convert</button><br />
-        <button class="convertbtnpos" type="button" disabled>Revert</button>
+        <div class="btn-group-vertical" style="margin-left:38%">
+            <button class="convertbtnpos" type="button" disabled>Convert</button><br />
+            <button class="convertbtnpos" type="button" disabled>Revert</button>
         </div>
     }
 
 
-    <button class="convert revertcolor" style="position:fixed;left:20%;bottom:0" @onclick="() => ResetAll()">Reset All Lobby Items</button><br>
+    <button class="convert revertcolor" style="position:fixed;left:20%;bottom:0" @onclick="() => ResetAll()">Reset All Lobby Items</button>
+    <br>
 }
 else if (curSelect == SelectionMode.SkinSelect)
 {
 
     <p>Search: <input type="text" placeholder="Renegade Raider, CID_028_Athena_Commando_F" @bind-value="SearchTerm" @bind-value:event="oninput" style="width:30vw" /></p>
-    
 
-        @if (curSlot == SelectedSlot.SwapsFrom)
+
+    @if (curSlot == SelectedSlot.SwapsFrom)
+    {
+        @if (!SwapsToSkin.id.StartsWith("ITEM_ID"))
         {
-             @if (!SwapsToSkin.id.StartsWith("ITEM_ID"))
-                {
             <p>Showing @currentItemType compatible to swap to @SwapsToSkin.name</p>
         }
         else
@@ -101,174 +102,180 @@ else if (curSelect == SelectionMode.SkinSelect)
             SwapsToSkin.id = "ITEM_ID";
         }
 
-            <div class="card-group">
-        @foreach (var skin in FilteredSkins.Where(x => x.id.Length >= SwapsToSkin.id.Length))
-        {
-            @if (skin.id == SwapsToSkin.id)
+        <div class="card-group">
+            @foreach (var skin in FilteredSkins.Where(x => x.id.Length >= SwapsToSkin.id.Length))
             {
-                    continue;
-                }
-
-            <div class="col-md-2">
-                <div class="card text-white" style="width:auto;height:auto;background:#486581;margin:2px">
-                    <div class="card-header text-center" style="font-size:small">@skin.name<div class="text-start" style="font-size:x-small;color:#9Fb3C8;height:10px">@skin.id</div></div>
-
-                    <div class="card-body text-center align-content-center">
-                        <img class="card-img-top" src="@skin.images.smallIcon" style="width:50%; height:auto;@skin.rarity.bgcss">
-                    </div>
-                    <div class="card-footer text-center">
-                        <a class="btn btn-outline-light" @onclick="(() => SelectSkin(skin))">Select</a>
-                    </div>
-                </div>
-            </div>
-        }
-        </div>
-        }
-        else if (curSlot == SelectedSlot.SwapsTo)
-        {
-            @if (!SwapsFromSkin.id.StartsWith("ITEM_ID"))
+                @if (skin.id == SwapsToSkin.id)
                 {
-                   <p>Showing skins compatible to swap from @SwapsFromSkin.name</p>
-                }
-
-                <div class="card-group">
-        @foreach (var skin in FilteredSkins.Where(x => x.id.Length <= SwapsFromSkin.id.Length))
-        {
-             @if (skin.id == SwapsFromSkin.id)
-            {
                     continue;
                 }
-            <div class="col-md-2">
-                <div class="card text-white" style="width:auto;height:auto;background:#486581;margin:2px">
-                    <div class="card-header text-center" style="font-size:small">@skin.name<div class="text-start" style="font-size:x-small;color:#9Fb3C8;height:10px">@skin.id</div></div>
 
-                    <div class="card-body text-center align-content-center">
-                        <img class="card-img-top" src="@skin.images.smallIcon" style="width:50%; height:auto;@skin.rarity.bgcss">
-                    </div>
-                    <div class="card-footer text-center">
-                        <a class="btn btn-outline-light" @onclick="(() => SelectSkin(skin))">Select</a>
+                <div class="col-md-2">
+                    <div class="card text-white" style="width:auto;height:auto;background:#486581;margin:2px">
+                        <div class="card-header text-center" style="font-size:small">@skin.name<div class="text-start" style="font-size:x-small;color:#9Fb3C8;height:10px">@skin.id</div></div>
+
+                        <div class="card-body text-center align-content-center">
+                            <img class="card-img-top" src="@skin.images.smallIcon" style="width:50%; height:auto;@skin.rarity.bgcss">
+                        </div>
+                        <div class="card-footer text-center">
+                            <a class="btn btn-outline-light" @onclick="(() => SelectSkin(skin))">Select</a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        }
+            }
         </div>
+    }
+    else if (curSlot == SelectedSlot.SwapsTo)
+    {
+        @if (!SwapsFromSkin.id.StartsWith("ITEM_ID"))
+        {
+            <p>Showing skins compatible to swap from @SwapsFromSkin.name</p>
         }
+
+        <div class="card-group">
+            @foreach (var skin in FilteredSkins.Where(x => x.id.Length <= SwapsFromSkin.id.Length))
+            {
+                @if (skin.id == SwapsFromSkin.id)
+                {
+                    continue;
+                }
+                <div class="col-md-2">
+                    <div class="card text-white" style="width:auto;height:auto;background:#486581;margin:2px">
+                        <div class="card-header text-center" style="font-size:small">@skin.name<div class="text-start" style="font-size:x-small;color:#9Fb3C8;height:10px">@skin.id</div></div>
+
+                        <div class="card-body text-center align-content-center">
+                            <img class="card-img-top" src="@skin.images.smallIcon" style="width:50%; height:auto;@skin.rarity.bgcss">
+                        </div>
+                        <div class="card-footer text-center">
+                            <a class="btn btn-outline-light" @onclick="(() => SelectSkin(skin))">Select</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
 }
 
 <style>
 
-     button.convertbtnpos{
-	 transform: translateX(-50%) translateY(-50%);
-     color:#ccc;
-     opacity: 0.3;
-	 width: 200px;
-     background:#486581;
-	 height: 60px;
-	 border: 0;
-	 font-size: 18px;
-	 border-radius: 4px;
-	 font-family: 'Raleway', sans-serif;
-	 transition: 0.6s;
-	 overflow: hidden;
-}
+    button.convertbtnpos {
+        transform: translateX(-50%) translateY(-50%);
+        color: #ccc;
+        opacity: 0.3;
+        width: 200px;
+        background: #486581;
+        height: 60px;
+        border: 0;
+        font-size: 18px;
+        border-radius: 4px;
+        font-family: 'Raleway', sans-serif;
+        transition: 0.6s;
+        overflow: hidden;
+    }
 
- button.convert{
-	 transform: translateX(-50%) translateY(-50%);
-     background: #486581;
-	 color: #ccc;
-	 width: 200px;
-	 height: 60px;
-	 border: 0;
-	 font-size: 18px;
-	 border-radius: 4px;
-	 font-family: 'Raleway', sans-serif;
-	 transition: 0.6s;
-	 overflow: hidden;
-}
- button.convert:focus {
-	 outline: 0;
-}
- button.convert:before {
-	 content: '';
-	 display: block;
-	 position: absolute;
-	 background: rgba(255, 255, 255, 0.5);
-	 width: 60px;
-	 height: 100%;
-	 left: 0;
-	 top: 0;
-	 opacity: 0.5;
-	 filter: blur(30px);
-	 transform: translateX(-100px) skewX(-15deg);
-}
- button.convert:after {
-	 content: '';
-	 display: block;
-	 position: absolute;
-	 background: rgba(255, 255, 255, 0.2);
-	 width: 30px;
-	 height: 100%;
-	 left: 30px;
-	 top: 0;
-	 opacity: 0;
-	 filter: blur(5px);
-	 transform: translateX(-100px) skewX(-15deg);
-}
- button.convert.convertcolor:hover {
-	 background: #338033;
-}
+    button.convert {
+        transform: translateX(-50%) translateY(-50%);
+        background: #486581;
+        color: #ccc;
+        width: 200px;
+        height: 60px;
+        border: 0;
+        font-size: 18px;
+        border-radius: 4px;
+        font-family: 'Raleway', sans-serif;
+        transition: 0.6s;
+        overflow: hidden;
+    }
 
-button.convert.revertcolor:hover {
-	 background: #f02b2b;
-}
- button.convert:hover:before {
-	 transform: translateX(300px) skewX(-15deg);
-	 opacity: 0.6;
-	 transition: 0.7s;
-}
- button.convert:hover:after {
-	 transform: translateX(300px) skewX(-15deg);
-	 opacity: 1;
-	 transition: 0.7s;
-}
+        button.convert:focus {
+            outline: 0;
+        }
 
-button.refresh {
-  border-radius: 4px;
-  background-color: #00ad1d;
-  border: none;
-  color: #FFFFFF;
-  text-align: center;
-  font-size: 20px;
-  padding: 20px;
-  width: 200px;
-  transition: all 0.5s;
-  cursor: pointer;
-}
+        button.convert:before {
+            content: '';
+            display: block;
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            width: 60px;
+            height: 100%;
+            left: 0;
+            top: 0;
+            opacity: 0.5;
+            filter: blur(30px);
+            transform: translateX(-100px) skewX(-15deg);
+        }
 
-button.refresh span {
-  cursor: pointer;
-  display: inline-block;
-  position: relative;
-  transition: 0.5s;
-}
+        button.convert:after {
+            content: '';
+            display: block;
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            width: 30px;
+            height: 100%;
+            left: 30px;
+            top: 0;
+            opacity: 0;
+            filter: blur(5px);
+            transform: translateX(-100px) skewX(-15deg);
+        }
 
-button.refresh span:after {
-  content: '\0027f3';
-  position: absolute;
-  opacity: 0;
-  top: 0;
-  right: -20px;
-  transition: 0.5s;
-}
+        button.convert.convertcolor:hover {
+            background: #338033;
+        }
 
-button.refresh:hover span {
-  padding-right: 25px;
-}
+        button.convert.revertcolor:hover {
+            background: #f02b2b;
+        }
 
-button.refresh:hover span:after {
-  opacity: 1;
-  right: 0;
-}
+        button.convert:hover:before {
+            transform: translateX(300px) skewX(-15deg);
+            opacity: 0.6;
+            transition: 0.7s;
+        }
+
+        button.convert:hover:after {
+            transform: translateX(300px) skewX(-15deg);
+            opacity: 1;
+            transition: 0.7s;
+        }
+
+    button.refresh {
+        border-radius: 4px;
+        background-color: #00ad1d;
+        border: none;
+        color: #FFFFFF;
+        text-align: center;
+        font-size: 20px;
+        padding: 20px;
+        width: 200px;
+        transition: all 0.5s;
+        cursor: pointer;
+    }
+
+        button.refresh span {
+            cursor: pointer;
+            display: inline-block;
+            position: relative;
+            transition: 0.5s;
+        }
+
+            button.refresh span:after {
+                content: '\0027f3';
+                position: absolute;
+                opacity: 0;
+                top: 0;
+                right: -20px;
+                transition: 0.5s;
+            }
+
+        button.refresh:hover span {
+            padding-right: 25px;
+        }
+
+            button.refresh:hover span:after {
+                opacity: 1;
+                right: 0;
+            }
 </style>
 @code {
     private static Data.SkinObj.Datum SwapsFromSkin { get; set; }
@@ -284,7 +291,8 @@ button.refresh:hover span:after {
         Backblings,
         Emotes,
         Pickaxes,
-        Music
+        Music,
+        Glider
     }
 
     private ItemType currentItemType;
@@ -299,19 +307,27 @@ button.refresh:hover span:after {
             Data.SkinObj.Datum[] ItemSource = null;
             switch (currentItemType)
             {
-                case ItemType.Skins:ItemSource = main.skinObj.data;
+                case ItemType.Skins:
+                    ItemSource = main.skinObj.data;
                     break;
 
-                case ItemType.Backblings:ItemSource = main.backblingObj.data;
+                case ItemType.Backblings:
+                    ItemSource = main.backblingObj.data;
                     break;
 
-                case ItemType.Emotes:ItemSource = main.emotesObj.data;
+                case ItemType.Emotes:
+                    ItemSource = main.emotesObj.data;
                     break;
 
-                case ItemType.Pickaxes:ItemSource = main.pickaxeObj.data;
+                case ItemType.Pickaxes:
+                    ItemSource = main.pickaxeObj.data;
                     break;
 
-                case ItemType.Music:ItemSource = main.musicObj.data;
+                case ItemType.Music:
+                    ItemSource = main.musicObj.data;
+                    break;
+                case ItemType.Glider:
+                    ItemSource = main.gliderObj.data;
                     break;
             }
             FilteredSkinsList = new Data.SkinObj.Datum[ItemSource.Length];
@@ -332,7 +348,7 @@ button.refresh:hover span:after {
                     {
                         case "common":
                             FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#bebebe, #646464);background: radial-gradient(#bebebe, #646464);border: 3px solid #b1b1b1;overflow: hidden";
-                            break; 
+                            break;
 
                         case "uncommon":
                             FilteredSkinsList[i].rarity.bgcss = "background: -o-radial-gradient(#6abb1e, #175117);	background: radial-gradient(#6abb1e, #175117);	border: 3px solid #88e339;	overflow: hidden";
@@ -438,6 +454,12 @@ button.refresh:hover span:after {
 
     private async void ConvertSkin()
     {
+        if (MainService.CurrentConfig.Paks == null || MainService.CurrentConfig.CurrentInstalledFortniteVersion == null)
+        {
+            toastService.ShowError("Fortnite is not installed on your PC! If Fortnite is already installed try reinstalling Epic Games Launcher and Fortnite. Note: Pro Swapper Lobby does NOT work on Geforce Now.");
+            return;
+        }
+
         if (DisableButtons == false)
         {
             DisableButtons = true;
@@ -461,6 +483,12 @@ button.refresh:hover span:after {
 
     private async void RevertSkin()
     {
+        if (MainService.CurrentConfig.Paks == null || MainService.CurrentConfig.CurrentInstalledFortniteVersion == null)
+        {
+            toastService.ShowError("Fortnite is not installed on your PC! If Fortnite is already installed try reinstalling Epic Games Launcher and Fortnite. Note: Pro Swapper Lobby does NOT work on Geforce Now.");
+            return;
+        }
+
         if (DisableButtons == false)
         {
             DisableButtons = true;
@@ -521,10 +549,10 @@ button.refresh:hover span:after {
                 placeHolderskin.name = $"Please select an item";
                 placeHolderskin.id = "ITEM_ID                                                                                                                                                    ";
                 placeHolderskin.images = new Data.SkinObj.Images() { icon = "empty-icon.png", smallIcon = "empty-icon.png" };
-                placeHolderskin.rarity = new Data.SkinObj.Rarity() { value = "none", bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden"};
-        
+                placeHolderskin.rarity = new Data.SkinObj.Rarity() { value = "none", bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden" };
+
                 SwapsFromSkin = SwapsToSkin = placeHolderskin;
-        
+
                 StateHasChanged();
             }
         }
@@ -537,12 +565,12 @@ button.refresh:hover span:after {
         placeHolderskin.name = $"Please select an item";
         placeHolderskin.id = "ITEM_ID                                                                                                                                                    ";
         placeHolderskin.images = new Data.SkinObj.Images() { icon = "empty-icon.png", smallIcon = "empty-icon.png" };
-        placeHolderskin.rarity = new Data.SkinObj.Rarity() { value = "none", bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden"};
-        
+        placeHolderskin.rarity = new Data.SkinObj.Rarity() { value = "none", bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden" };
+
         SwapsFromSkin = SwapsToSkin = placeHolderskin;
         StateHasChanged();
     }
 
-    
+
 
     }

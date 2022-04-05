@@ -22,6 +22,7 @@ namespace ProSwapperLobby.Services
         private static SkinObj.Root _emotesObj { get; set; } = null;
         private static SkinObj.Root _pickaxeObj { get; set; } = null;
         private static SkinObj.Root _musicObj { get; set; } = null;
+        private static SkinObj.Root _gliderObj { get; set; } = null;
         public SkinObj.Root skinObj
         {
             get
@@ -60,7 +61,7 @@ namespace ProSwapperLobby.Services
                 return _pickaxeObj;
             }
         }
-        
+
         public SkinObj.Root musicObj
         {
             get
@@ -68,6 +69,15 @@ namespace ProSwapperLobby.Services
                 if (_musicObj == null)
                     _musicObj = MsgPacklz4<SkinObj.Root>($"{FortniteAPIURL}/cosmetics/br/search/all?backendType=AthenaMusicPack&responseOptions=ignore_null&responseFormat=msgpack_lz4");
                 return _musicObj;
+            }
+        }
+        public SkinObj.Root gliderObj
+        {
+            get
+            {
+                if (_gliderObj == null)
+                    _gliderObj = MsgPacklz4<SkinObj.Root>($"{FortniteAPIURL}/cosmetics/br/search/all?backendType=AthenaGlider&responseOptions=ignore_null&responseFormat=msgpack_lz4");
+                return _gliderObj;
             }
         }
         #endregion
@@ -126,7 +136,7 @@ namespace ProSwapperLobby.Services
                 public string key { get; set; }
             }
         }
-       
+
 
         #region ConfigHandler
 
@@ -158,10 +168,18 @@ namespace ProSwapperLobby.Services
             {
                 get
                 {
-                    if (_Paks == null)
-                        _Paks = SwapperLogic.EpicGamesLauncher.FindPakFiles();
+                    try
+                    {
+                        if (_Paks == null)
+                            _Paks = SwapperLogic.EpicGamesLauncher.FindPakFiles();
 
-                    return _Paks;
+                        return _Paks;
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+
                 }
             }
             public FAesKey aesKey
@@ -182,10 +200,15 @@ namespace ProSwapperLobby.Services
             {
                 get
                 {
-                    if (_fnVer == null)
-                        _fnVer = SwapperLogic.EpicGamesLauncher.GetCurrentInstalledFortniteVersion();
+                    try
+                    {
+                        if (_fnVer == null)
+                            _fnVer = SwapperLogic.EpicGamesLauncher.GetCurrentInstalledFortniteVersion();
 
-                    return _fnVer;
+                        return _fnVer;
+                    }
+                    catch { return null; }
+
                 }
             }
 

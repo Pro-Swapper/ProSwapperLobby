@@ -4,36 +4,38 @@ namespace ProSwapperLobby
 {
     public class DiscordRPC
     {
-		public static DiscordRpcClient client;
-		public static void InitializeRPC()
-		{
-			client = new DiscordRpcClient("697579712653819985");
-			client.Initialize();
-			Button[] buttons = { new Button() { Label = "Discord", Url = Services.MainService.DiscordWidgetAPI.instant_invite }, new Button() { Label = "YouTube", Url = "https://youtube.com/proswapperofficial" } };
+        public static DiscordRpcClient client = new DiscordRpcClient("697579712653819985");
+        public static void InitializeRPC()
+        {
+            if (client.IsInitialized)
+                return;
 
-			client.SetPresence(new RichPresence()
-			{
-				Details = "Pro Swapper Lobby | " + Services.MainService.version,
-				State = "Idle",
-				Timestamps = Timestamps.Now,
-				Buttons = buttons,
+            client.Initialize();
+            Button[] buttons = { new Button() { Label = "Discord", Url = Services.MainService.DiscordWidgetAPI.instant_invite }, new Button() { Label = "YouTube", Url = "https://youtube.com/proswapperofficial" } };
 
-				Assets = new Assets()
-				{
-					LargeImageKey = "logotransparent",
-					LargeImageText = "Pro Swapper",
-					SmallImageKey = "proswapperman",
-					SmallImageText = "Made by Kye#5000"
-				}
-			});
-			SetState("Idle");
-		}
-		public static void SetState(string state, bool watching = false)
-		{
-			if (watching)
-				state = "Watching " + state;
+            client.SetPresence(new RichPresence()
+            {
+                Details = "Pro Swapper Lobby | " + Services.MainService.version,
+                State = "Idle",
+                Timestamps = Timestamps.Now,
+                Buttons = buttons,
 
-			client.UpdateState(state);
-		}
-	}
+                Assets = new Assets()
+                {
+                    LargeImageKey = "logotransparent",
+                    LargeImageText = "Pro Swapper",
+                    SmallImageKey = "proswapperman",
+                    SmallImageText = "Made by Kye#5000"
+                }
+            });
+            SetState("Idle");
+        }
+        public static void SetState(string state, bool watching = false)
+        {
+            if (watching)
+                state = "Watching " + state;
+
+            client.UpdateState(state);
+        }
+    }
 }
