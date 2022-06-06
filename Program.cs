@@ -10,6 +10,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
+#if RELEASE
         if (!File.Exists("aspnetcorev2_inprocess.dll"))
         {
             Console.Clear();
@@ -18,15 +19,10 @@ public class Program
             Console.ReadKey();
             Process.GetCurrentProcess().Kill();
         }
+#endif
 
 
         const string url = "http://localhost:6969";
-        if (args.Length == 0)
-        {
-            Process.Start(Process.GetCurrentProcess().ProcessName, "--urls " + url);
-            Process.GetCurrentProcess().Kill();
-            return;
-        }
 
         ProcessStartInfo info = new ProcessStartInfo();
         info.FileName = url;
@@ -62,7 +58,7 @@ public class Program
         app.MapBlazorHub();
         app.MapFallbackToPage("/_Host");
 
-        app.Run();
+        app.Run(url);
 #if !RELEASE
         Console.Clear();
 #endif

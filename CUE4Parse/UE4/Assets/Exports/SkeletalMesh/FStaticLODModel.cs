@@ -222,6 +222,10 @@ namespace CUE4Parse.UE4.Assets.Exports.SkeletalMesh
                         {
                             var clothIndexMapping = Ar.ReadArray<long>();
                             Ar.Position += 2 * 4;
+                            if (FUE5ReleaseStreamObjectVersion.Get(Ar) >= FUE5ReleaseStreamObjectVersion.Type.AddClothMappingLODBias)
+                            {
+                                Ar.Position += 4 * clothIndexMapping.Length;
+                            }
                         }
 
                         var profileNames = Ar.ReadArray(Ar.ReadFName);
@@ -323,7 +327,7 @@ namespace CUE4Parse.UE4.Assets.Exports.SkeletalMesh
 
             var skinWeightProfilesData = new FSkinWeightProfilesData(Ar);
 
-            if (Ar.Game >= EGame.GAME_UE5_0) // Note: This was added in UE4.27, but we're only reading it on UE5 for compatibility with Fortnite
+            if (Ar.Game is >= EGame.GAME_UE5_0 or EGame.GAME_UE4_25_Plus) // Note: This was added in UE4.27, but we're only reading it on UE5 for compatibility with Fortnite
             {
                 var rayTracingData = Ar.ReadArray<byte>();
             }

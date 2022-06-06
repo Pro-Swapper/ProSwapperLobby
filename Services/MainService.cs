@@ -23,6 +23,7 @@ namespace ProSwapperLobby.Services
         private static SkinObj.Root _pickaxeObj { get; set; } = null;
         private static SkinObj.Root _musicObj { get; set; } = null;
         private static SkinObj.Root _gliderObj { get; set; } = null;
+        private static AllSkinsJson.Root _GameSkin { get; set; } = null;
         public SkinObj.Root skinObj
         {
             get
@@ -80,6 +81,16 @@ namespace ProSwapperLobby.Services
                 return _gliderObj;
             }
         }
+
+
+        public AllSkinsJson.Root AllSkins()
+        {
+            if (_GameSkin == null)
+                _GameSkin = DataMine.GetAllSkins();
+
+            return _GameSkin;
+        }
+
         #endregion
 
         /// <summary>
@@ -98,6 +109,16 @@ namespace ProSwapperLobby.Services
 
         }
 
+
+        /// <summary>
+        /// Resets all currently swapped items
+        /// </summary>
+        public static void ResetAll()
+        {
+            SwapperLogic.SwapLogic.ResetAllSwaps();
+            CurrentConfig.swaplogs.Clear();
+            SaveConfig();
+        }
 
         public static string ProSwapperFolder => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Pro_Swapper\";
 
@@ -182,16 +203,18 @@ namespace ProSwapperLobby.Services
 
                 }
             }
-            public FAesKey aesKey
+            public FAesKey? aesKey
             {
                 get
-                {
+                {       
                     if (aesResponse == null)
                         aesResponse = MsgPacklz4<AESResponse.Root>($"{FortniteAPIURL}/aes?responseFormat=msgpack_lz4&responseOptions=ignore_null");
 
-                    if (_aesKey == null)
+                    if (aesResponse.data.mainKey != null && _aesKey == null)
+                    {
                         _aesKey = new FAesKey(aesResponse.data.mainKey);
-
+                    }
+                       
                     return _aesKey;
                 }
             }
@@ -202,10 +225,7 @@ namespace ProSwapperLobby.Services
                 {
                     try
                     {
-                        if (_fnVer == null)
-                            _fnVer = SwapperLogic.EpicGamesLauncher.GetCurrentInstalledFortniteVersion();
-
-                        return _fnVer;
+                        return SwapperLogic.EpicGamesLauncher.GetCurrentInstalledFortniteVersion();
                     }
                     catch { return null; }
 

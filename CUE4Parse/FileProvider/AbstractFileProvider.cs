@@ -52,7 +52,7 @@ namespace CUE4Parse.FileProvider
             {
                 if (string.IsNullOrEmpty(_gameName))
                 {
-                    string t = Files.Keys.FirstOrDefault(it => !it.SubstringBefore('/').EndsWith("engine", StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
+                    string t = Files.Keys.FirstOrDefault(it => !it.SubstringBefore('/').EndsWith("engine", StringComparison.OrdinalIgnoreCase) && !it.StartsWith('/')) ?? string.Empty;
                     _gameName = t.SubstringBefore('/');
                 }
                 return _gameName;
@@ -196,10 +196,11 @@ namespace CUE4Parse.FileProvider
             VirtualPaths.Clear();
 
             var i = 0;
-            foreach (var (filePath, gameFile) in Files)
+            var useIndividualPlugin = version < EUnrealEngineObjectUE4Version.ADDED_SOFT_OBJECT_PATH || !Files.Any(file => file.Key.EndsWith(".upluginmanifest"));
+            foreach ((string filePath, GameFile gameFile) in Files)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if (version < EUnrealEngineObjectUE4Version.ADDED_SOFT_OBJECT_PATH) // < 4.18
+                if (useIndividualPlugin) // < 4.18 or no .upluginmanifest
                 {
                     if (!filePath.EndsWith(".uplugin")) continue;
                     if (!TryCreateReader(gameFile.Path, out var stream)) continue;
@@ -651,7 +652,7 @@ namespace CUE4Parse.FileProvider
                 packagePath = packagePath.Substring(0, dotIndex);
             }
 
-            var pkg = await TryLoadPackageAsync(packagePath);
+            var pkg = await TryLoadPackageAsync(packagePath).ConfigureAwait(false);
             return pkg?.GetExportOrNull(objectName, IsCaseInsensitive ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
         }
 

@@ -1,4 +1,5 @@
 ﻿@page "/swaplogs"
+@inject IToastService toastService
 
 <h3>Current Swapped Items (Lobby)</h3>
 
@@ -10,23 +11,99 @@ else
 {
 
     <ul class="list-group">
-  
-
     @foreach (var item in ProSwapperLobby.Services.MainService.CurrentConfig.swaplogs)
     {
        <button type="button" class="list-group-item list-group-item-action" style="width:50vw">@item.SwapFrom.name (@item.SwapFrom.id) To @item.SwapTo.name (@item.SwapTo.id) (Lobby)</button>
     }
     </ul>
+    <button class="convert revertcolor" style="position:fixed;left:20%;bottom:0" @onclick="() => ResetAll()">Reset All Lobby Items</button>
+    
+    
 }
 
 
+<Style>
+
+    button.convert {
+        transform: translateX(-50%) translateY(-50%);
+        background: #486581;
+        color: #ccc;
+        width: 200px;
+        height: 60px;
+        border: 0;
+        font-size: 18px;
+        border-radius: 4px;
+        font-family: 'Raleway', sans-serif;
+        transition: 0.6s;
+        overflow: hidden;
+    }
+
+        button.convert:focus {
+            outline: 0;
+        }
+
+        button.convert:before {
+            content: '';
+            display: block;
+            position: absolute;
+            background: rgba(255, 255, 255, 0.5);
+            width: 60px;
+            height: 100%;
+            left: 0;
+            top: 0;
+            opacity: 0.5;
+            filter: blur(30px);
+            transform: translateX(-100px) skewX(-15deg);
+        }
+
+        button.convert:after {
+            content: '';
+            display: block;
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            width: 30px;
+            height: 100%;
+            left: 30px;
+            top: 0;
+            opacity: 0;
+            filter: blur(5px);
+            transform: translateX(-100px) skewX(-15deg);
+        }
+
+        button.convert.convertcolor:hover {
+            background: #338033;
+        }
+
+        button.convert.revertcolor:hover {
+            background: #f02b2b;
+        }
+
+        button.convert:hover:before {
+            transform: translateX(300px) skewX(-15deg);
+            opacity: 0.6;
+            transition: 0.7s;
+        }
+
+        button.convert:hover:after {
+            transform: translateX(300px) skewX(-15deg);
+            opacity: 1;
+            transition: 0.7s;
+        }
+        </Style>
 @code {
+
 
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
 
+    }
+
+    private void ResetAll()
+    {
+        MainService.ResetAll();
+        toastService.ShowSuccess($"Reset all currently converted lobby items");
     }
 
 }

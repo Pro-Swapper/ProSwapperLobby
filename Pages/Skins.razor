@@ -278,8 +278,8 @@ else if (curSelect == SelectionMode.SkinSelect)
             }
 </style>
 @code {
-    private static Data.SkinObj.Datum SwapsFromSkin { get; set; }
-    private static Data.SkinObj.Datum SwapsToSkin { get; set; }
+    public static Data.SkinObj.Datum SwapsFromSkin { get; set; }
+    public static Data.SkinObj.Datum SwapsToSkin { get; set; }
 
     private static string SearchTerm { get; set; } = "";
     private static bool DisableButtons { get; set; } = false;
@@ -464,8 +464,8 @@ else if (curSelect == SelectionMode.SkinSelect)
         {
             DisableButtons = true;
             await InvokeAsync(StateHasChanged);
-
-            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsFromSkin, SwapsToSkin, Converting: true));
+            Exception ex = new Exception("");
+            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsFromSkin, SwapsToSkin, true, ref ex));
             if (Swapped)
             {
                 toastService.ShowSuccess($"Succesfully converted {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]");
@@ -474,7 +474,7 @@ else if (curSelect == SelectionMode.SkinSelect)
             }
             else
             {
-                toastService.ShowError($"[Log] ERROR converting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap.");
+                toastService.ShowError($"[Log] ERROR converting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap.{ex.Message}");
             }
             DisableButtons = false;
             await InvokeAsync(StateHasChanged);
@@ -493,8 +493,8 @@ else if (curSelect == SelectionMode.SkinSelect)
         {
             DisableButtons = true;
             await InvokeAsync(StateHasChanged);
-
-            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsToSkin, SwapsFromSkin));
+            Exception ex = new Exception("");
+            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsToSkin, SwapsFromSkin, false, ref ex));
             if (Swapped)
             {
                 toastService.ShowSuccess($"Succesfully reverted {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]");
@@ -503,7 +503,7 @@ else if (curSelect == SelectionMode.SkinSelect)
             }
             else
             {
-                toastService.ShowError($"[Log] ERROR reverting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap.");
+                toastService.ShowError($"[Log] ERROR reverting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap.{ex.Message}");
             }
             DisableButtons = false;
             await InvokeAsync(StateHasChanged);
@@ -518,17 +518,22 @@ else if (curSelect == SelectionMode.SkinSelect)
             await InvokeAsync(StateHasChanged);
             toastService.ShowInfo($"Reset selected {currentItemType}");
 
+            var placeHolderskin = new Data.SkinObj.Datum();
+            placeHolderskin.name = $"Please select an item";
+            placeHolderskin.id = "ITEM_ID                                                                                                                                                    ";
+            placeHolderskin.images = new Data.SkinObj.Images() { icon = "empty-icon.png", smallIcon = "empty-icon.png" };
+            placeHolderskin.rarity = new Data.SkinObj.Rarity() { value = "none", bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden" };
+
+            SwapsFromSkin = SwapsToSkin = placeHolderskin;
             OnInitialized();
             DisableButtons = false;
             await InvokeAsync(StateHasChanged);
         }
     }
 
-    private async void ResetAll()
+    private void ResetAll()
     {
-        ProSwapperLobby.SwapperLogic.SwapLogic.ResetAllSwaps();
-        MainService.CurrentConfig.swaplogs.Clear();
-        MainService.SaveConfig();
+        MainService.ResetAll();
         toastService.ShowSuccess($"Reset all currently converted lobby items");
     }
 
@@ -536,13 +541,16 @@ else if (curSelect == SelectionMode.SkinSelect)
 
     private void OnLocationChanged(object sender, LocationChangedEventArgs args)
     {
-        if (QueryHelpers.ParseQuery(NavManager.ToAbsoluteUri(NavManager.Uri).Query).TryGetValue("type", out var itemTypeQuery))
+        var query = QueryHelpers.ParseQuery(NavManager.ToAbsoluteUri(NavManager.Uri).Query);
+
+        if (query.TryGetValue("type", out var itemTypeQuery))
         {
             Enum.TryParse(Convert.ToString(itemTypeQuery), out ItemType _outitemtype);
             if (currentItemType != _outitemtype)
             {
                 currentItemType = _outitemtype;
                 curSelect = SelectionMode.Main;
+
 
                 //Reset current selected stuff in slots
                 var placeHolderskin = new Data.SkinObj.Datum();
@@ -553,21 +561,27 @@ else if (curSelect == SelectionMode.SkinSelect)
 
                 SwapsFromSkin = SwapsToSkin = placeHolderskin;
 
+
                 StateHasChanged();
             }
         }
     }
     protected override void OnInitialized()
     {
+        var query = QueryHelpers.ParseQuery(NavManager.ToAbsoluteUri(NavManager.Uri).Query);
         OnLocationChanged(null, null);
         NavManager.LocationChanged += OnLocationChanged;
-        var placeHolderskin = new Data.SkinObj.Datum();
-        placeHolderskin.name = $"Please select an item";
-        placeHolderskin.id = "ITEM_ID                                                                                                                                                    ";
-        placeHolderskin.images = new Data.SkinObj.Images() { icon = "empty-icon.png", smallIcon = "empty-icon.png" };
-        placeHolderskin.rarity = new Data.SkinObj.Rarity() { value = "none", bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden" };
+        query.TryGetValue("FromStyle", out var fromskinID);
+        if (Convert.ToString(fromskinID) != "true")
+        {
+            var placeHolderskin = new Data.SkinObj.Datum();
+            placeHolderskin.name = $"Please select an item";
+            placeHolderskin.id = "ITEM_ID                                                                                                                                                    ";
+            placeHolderskin.images = new Data.SkinObj.Images() { icon = "empty-icon.png", smallIcon = "empty-icon.png" };
+            placeHolderskin.rarity = new Data.SkinObj.Rarity() { value = "none", bgcss = "background: -o-radial-gradient(#5447d4, #312497);	background: radial-gradient(#5447d4, #312497);	border: 3px solid #8078ff;	overflow: hidden" };
 
-        SwapsFromSkin = SwapsToSkin = placeHolderskin;
+            SwapsFromSkin = SwapsToSkin = placeHolderskin;
+        }
         StateHasChanged();
     }
 

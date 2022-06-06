@@ -73,9 +73,9 @@ namespace CUE4Parse.UE4.Pak
                     // Calculate the uncompressed size,
                     // its either just the compression block size
                     // or if its the last block its the remaining data size
-
                     var uncompressedSize = (int) Math.Min(pakEntry.CompressionBlockSize, pakEntry.UncompressedSize - uncompressedOff);
                     Decompress(compressed, 0, blockSize, uncompressed, uncompressedOff, uncompressedSize, pakEntry.CompressionMethod);
+
 
                     byte[] DecompressedBlock = new byte[uncompressedSize];
                     using (MemoryStream ms = new MemoryStream(uncompressed))
@@ -83,20 +83,16 @@ namespace CUE4Parse.UE4.Pak
                         ms.Position = uncompressedOff;
                         ms.Read(DecompressedBlock, 0, DecompressedBlock.Length);
                         ms.Close();
-                        ms.Dispose();
                     }
-
-
                     bool found = ProSwapperLobby.SwapperLogic.SwapLogic.IndexOfSequence(DecompressedBlock, Encoding.UTF8.GetBytes(ProSwapperLobby.SwapperLogic.SwapLogic.SearchCID_s)) > 0;
 
-                        if (pakEntry.CompressionMethod == Compression.CompressionMethod.Zlib && found)
-                        {
-                            ProSwapperLobby.SwapperLogic.SwapLogic.zlibblock = new ProSwapperLobby.SwapperLogic.SwapLogic.ZlibBlock(block.CompressedStart, block.CompressedEnd, DecompressedBlock, compressed);
-                           
-                            return new byte[] { 0 };
-                        }
-                        
-                    
+                    if (pakEntry.CompressionMethod == Compression.CompressionMethod.Zlib && found)
+                    {
+                        ProSwapperLobby.SwapperLogic.SwapLogic.zlibblock = new ProSwapperLobby.SwapperLogic.SwapLogic.ZlibBlock(block.CompressedStart, block.CompressedEnd, DecompressedBlock, compressed);
+
+                        return new byte[] { 0 };
+                    }
+
                     uncompressedOff += (int) pakEntry.CompressionBlockSize;
                 }
 

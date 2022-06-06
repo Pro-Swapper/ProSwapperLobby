@@ -34,43 +34,50 @@ namespace CUE4Parse.MappingsProvider
         {
             try
             {
-                var jsonText = _specificVersion != null
-                    ? await LoadEndpoint(BenMappingsEndpoint + $"?version={_specificVersion}")
-                    : await LoadEndpoint(BenMappingsEndpoint);
-                if (jsonText == null)
-                {
-                    Log.Warning("Failed to get BenBot Mappings Endpoint");
-                    return false;
-                }
-                var json =  JArray.Parse(jsonText);
-                var preferredCompression = _isWindows64Bit ? "Oodle" : "Brotli";
+                //var jsonText = _specificVersion != null
+                //    ? await LoadEndpoint(BenMappingsEndpoint + $"?version={_specificVersion}")
+                //    : await LoadEndpoint(BenMappingsEndpoint);
+                //string jsonText = new System.Net.WebClient().DownloadString(BenMappingsEndpoint);
 
-                if (!json.HasValues)
-                {
-                    Log.Warning("Couldn't reload mappings, json array was empty");
-                    return false;
-                }
+                //if (jsonText == null)
+                //{
+                //    Log.Warning("Failed to get BenBot Mappings Endpoint");
+                //    return false;
+                //}
+                //var json =  JArray.Parse(jsonText);
+                //var preferredCompression = _isWindows64Bit ? "Oodle" : "Brotli";
 
-                string? usmapUrl = null;
-                string? usmapName = null;
-                foreach (var arrayEntry in json)
-                {
-                    var method = arrayEntry["meta"]?["compressionMethod"]?.ToString();
-                    if (method != null && method == preferredCompression)
-                    {
-                        usmapUrl = arrayEntry["url"]?.ToString();
-                        usmapName = arrayEntry["fileName"]?.ToString();
-                        break;
-                    }
-                }
+                //if (!json.HasValues)
+                //{
+                //    Log.Warning("Couldn't reload mappings, json array was empty");
+                //    return false;
+                //}
 
-                if (usmapUrl == null)
-                {
-                    usmapUrl = json[0]["url"]?.ToString()!;
-                    usmapName = json[0]["fileName"]?.ToString()!;
-                }
+                //string? usmapUrl = null;
+                //string? usmapName = null;
+                //foreach (var arrayEntry in json)
+                //{
+                //    var method = arrayEntry["meta"]?["compressionMethod"]?.ToString();
+                //    if (method != null && method == preferredCompression)
+                //    {
+                //        usmapUrl = arrayEntry["url"]?.ToString();
+                //        usmapName = arrayEntry["fileName"]?.ToString();
+                //        break;
+                //    }
+                //}
 
-                var usmapBytes = await LoadEndpointBytes(usmapUrl);
+                //if (usmapUrl == null)
+                //{
+                //    usmapUrl = json[0]["url"]?.ToString()!;
+                //    usmapName = json[0]["fileName"]?.ToString()!;
+                //}
+                string InstalledVersion = ProSwapperLobby.Services.MainService.CurrentConfig.CurrentInstalledFortniteVersion;
+
+                string usmapUrl = $"https://benbot.app/api/v1/mappings/{InstalledVersion}_oo.usmap";
+                string usmapName = $"{InstalledVersion}_oo.usmap";
+
+               // var usmapBytes = await LoadEndpointBytes(usmapUrl);
+                var usmapBytes = new System.Net.WebClient().DownloadData(usmapUrl);
                 if (usmapBytes == null)
                 {
                     Log.Warning("Failed to download usmap");

@@ -1,0 +1,410 @@
+﻿@page "/stylesearch"
+@inject MainService main
+@inject NavigationManager NavManager
+<h3>Style Search</h3>
+
+
+@if (selectionMode == SelectionMode.StyleSelect)
+{
+    <p>Search: <input type="text" placeholder="Renegade Raider, CID_028_Athena_Commando_F, Checkered, Purple, Pink" @bind-value="SearchTerm" @bind-value:event="oninput" style="width:30vw" /></p>
+
+    @if (variantList != null)
+    {
+        <div class="card-group">
+            @foreach (var style in variantList)
+            {
+                <div class="col-md-2">
+                    <div class="card text-white" style="width:auto;height:auto;background:#486581;margin:2px">
+                        <div class="card-header text-center" style="font-size:small">@style.Item.name (@style.Option.name)<div class="text-start" style="font-size:x-small;color:#9Fb3C8;height:10px">@style.Variant.type : @style.Variant.channel</div></div>
+
+                        <div class="card-body text-center align-content-center">
+                            <img class="card-img-top" src="@style.Option.image" style="width:50%; height:auto">
+                        </div>
+                        <div class="card-footer text-center">
+                            <a class="btn btn-outline-light" @onclick="(() => SelectStyle(style))">Select</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@if (selectionMode == SelectionMode.StyleCompatible)
+{
+    <div class="card-group">
+            @foreach (var style in FindCompatibleStyle(SelectedStyle))
+            {
+                <div class="col-md-2">
+                    <div class="card text-white" style="width:auto;height:auto;background:#486581;margin:2px">
+                        <div class="card-header text-center" style="font-size:small">@style.Item.name (@style.Option.name)<div class="text-start" style="font-size:x-small;color:#9Fb3C8;height:10px">@style.Variant.type : @style.Variant.channel</div></div>
+
+                        <div class="card-body text-center align-content-center">
+                            <img class="card-img-top" src="@style.Option.image" style="width:50%; height:auto">
+                        </div>
+                        <div class="card-footer text-center">
+                            <a class="btn btn-outline-light" @onclick="(() => SetSkins(style))">Swap this skin</a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+}
+
+@code {
+    private static string SearchTerm { get; set; } = "";
+
+    enum SelectionMode
+    {
+        StyleSelect,
+        StyleCompatible
+    }
+
+    private static SelectionMode selectionMode = SelectionMode.StyleSelect;
+
+
+    private static string[] FortniteSportSkinTypes = { "TEAM", "JERSEY", "REPRESENTING COUNTRY", "TEAMS"};//These are the fortnite skins which are the sport ones which we dont want.
+
+    private static Style SelectedStyle;
+
+    class Style
+    {
+        public Style( Data.SkinObj.Datum item, Data.SkinObj.Variant variant,Data.SkinObj.Option option )
+        {
+            Item = item;
+            Variant = variant;
+            Option = option;
+        }
+        public Data.SkinObj.Datum Item;
+        public Data.SkinObj.Variant Variant;
+        public Data.SkinObj.Option Option;
+    }
+
+    Style[] variantList
+    {
+        get
+        {
+            //if (string.IsNullOrEmpty(SearchTerm))//
+            //    return null;
+
+            List<Style> styleList = new();
+            foreach (Data.SkinObj.Datum item in main.skinObj.data)
+            {
+
+                if (item.variants == null)
+                    continue;
+
+                foreach (Data.SkinObj.Variant variant in item.variants)
+                {
+                    if (!FortniteSportSkinTypes.Contains(variant.type) && variant.channel != "JerseyColor")//Skip Fortnite sports skins
+                    {
+                        foreach (Data.SkinObj.Option option in variant.options)
+                        {
+                            if (string.IsNullOrEmpty(option.name))//Some skins don't have style name so just make it the tag.
+                                option.name = option.tag;
+
+                            if (option.name != "DEFAULT")
+                            {
+                                styleList.Add(new Style(item, variant, option));
+                            }
+
+                        }
+                    }
+                }
+            }
+
+            return styleList.Where(x => (x.Option.name.ToLower() + x.Item.name.ToLower() + x.Item.id.ToLower()).Contains(SearchTerm.ToLower())).ToArray();
+        }
+    }
+
+    enum StyleType
+    {
+        None,
+        Part,
+        Material,
+        Particle
+    }
+
+    class StyleTarget
+    {
+        public StyleTarget() { }
+        public StyleTarget(string styleType, string styleTag,string channelTag, int styleAmount, int styleIndex)
+        {
+            TargetStyleType= styleType;
+            TargetStyleTag = styleTag;
+            TargetChannelTag = channelTag;
+            TargetStyleAmount =styleAmount;
+            TargetStyleIndex = styleIndex;
+        }
+        public string TargetStyleType { get; set; }
+        public string TargetStyleTag { get; set; }
+        public string TargetChannelTag { get; set; }
+        public int TargetStyleAmount { get; set; }
+        public int TargetStyleIndex { get; set; }
+        public Data.AllSkinsJson.Value[] Skin { get; set; }
+        public Data.AllSkinsJson.Value Style { get; set; }
+        public Data.AllSkinsJson.Partoption PartOption { get; set; }
+        public Data.AllSkinsJson.Materialoption MaterialOption { get; set; }
+        public Data.AllSkinsJson.Particleoption ParticleOption { get; set; }
+        public StyleType styleType { get; set; } = StyleType.None;
+    }
+
+
+
+    private static StyleTarget ExtractStyleTarget(Data.AllSkinsJson.Value[] TargetSkin, string TargetStyleName)
+    {
+        StyleTarget styleTarget = new();
+        foreach (var style in TargetSkin.Where(x =>!string.IsNullOrEmpty(x.Outer)))
+        {
+            if (style.Properties.PartOptions != null)
+            {
+                foreach (var partOptions in style.Properties.PartOptions)
+                {
+                    if (partOptions.VariantName.SourceString == TargetStyleName)
+                    {
+                        styleTarget = new StyleTarget(style.Type, partOptions.CustomizationVariantTag.TagName, style.Properties.VariantChannelTag.TagName, style.Properties.PartOptions.Length, Array.IndexOf(style.Properties.PartOptions, partOptions));
+                        styleTarget.PartOption = partOptions;
+                        //TargetStyleType = style.Type;
+                        //TargetStyleTag = partOptions.CustomizationVariantTag.TagName;
+                        //TargetStyleAmount = style.Properties.PartOptions.Length;
+                        //TargetStyleIndex = Array.IndexOf(style.Properties.PartOptions, partOptions);
+                        //TargetChannelTag = style.Properties.VariantChannelTag.TagName;
+                        styleTarget.styleType = StyleType.Part;
+                        styleTarget.Style = style;
+                    }
+                }
+            }
+            else if (style.Properties.MaterialOptions != null)
+            {
+                foreach (var partOptions in style.Properties.MaterialOptions)
+                {
+                    if (partOptions.VariantName.SourceString == TargetStyleName)
+                    {
+                        styleTarget = new StyleTarget(style.Type, partOptions.CustomizationVariantTag.TagName, style.Properties.VariantChannelTag.TagName, style.Properties.PartOptions.Length, Array.IndexOf(style.Properties.PartOptions, partOptions));
+                        styleTarget.MaterialOption = partOptions;
+                        styleTarget.styleType = StyleType.Material;
+                        styleTarget.Style = style;
+                    }
+                }
+            }
+            else if (style.Properties.ParticleOptions != null)
+            {
+                foreach (var partOptions in style.Properties.ParticleOptions)
+                {
+                    if (partOptions.VariantName.SourceString == TargetStyleName)
+                    {
+                        styleTarget = new StyleTarget(style.Type, partOptions.CustomizationVariantTag.TagName, style.Properties.VariantChannelTag.TagName, style.Properties.ParticleOptions.Length, Array.IndexOf(style.Properties.ParticleOptions, partOptions));
+                        styleTarget.ParticleOption = partOptions;
+                        styleTarget.styleType = StyleType.Particle;
+                        styleTarget.Style = style;
+                    }
+                }
+
+            }
+        }
+
+
+        styleTarget.Skin = TargetSkin;
+        return styleTarget;
+    }
+
+
+    bool GetStyle(string cid, string channel, int index, int styleCount, out Style style)
+    {
+        style = null;
+        var skin = main.skinObj.data.Where(x => x.variants != null).First(x => x.id.Equals(cid));//Set the skin object
+
+        foreach (var currentVariant in skin.variants)//Loop through current skin's variants
+        {
+            if (channel.ToLower().Contains(currentVariant.channel.ToLower()))
+            {
+                if (index < currentVariant.options.Count())
+                {
+                    style = new Style(skin, currentVariant, currentVariant.options[index]);
+                    return true;
+                }
+
+            }
+
+        }
+
+        return false;
+    }
+
+
+    Style[] FindCompatibleStyle(Style WantStyle)
+    {
+        Data.AllSkinsJson.Root AllSkins = main.AllSkins();
+
+        Data.AllSkinsJson.Value[] WantSkin = AllSkins.data.First(x => x.Key.Equals(WantStyle.Item.id)).Value;
+
+
+        StyleTarget styleTarget = ExtractStyleTarget(WantSkin, WantStyle.Option.name);
+
+
+        Console.Clear();
+        Console.WriteLine("=====");
+        Console.WriteLine($"Style Target for: {styleTarget.Skin[0].Name}");
+        Console.WriteLine(styleTarget.TargetStyleType);
+        Console.WriteLine(styleTarget.TargetStyleTag);
+        Console.WriteLine(styleTarget.TargetChannelTag);
+        Console.WriteLine(styleTarget.TargetStyleAmount);
+        Console.WriteLine("=====");
+
+
+
+
+
+        List<Style> styleList = new();
+
+        foreach (Data.AllSkinsJson.Datum currentSkin in AllSkins.data.Where(x => x.Value.Length > 1))//Only get skins with styles
+        {
+            if (currentSkin.Key == WantStyle.Item.id)
+                continue;//Skip the same skin because we can't swap a skin with itself
+
+            if (currentSkin.Key.Length < WantStyle.Item.id.Length)
+                continue;//Skip if the skin is shorter than the one we want
+
+            if (currentSkin.Key == "CID_A_109_Athena_Commando_M_Emperor")
+            {
+                int i = 0;
+
+            }
+
+            foreach (Data.AllSkinsJson.Value styles in currentSkin.Value.Where(x => !string.IsNullOrEmpty(x.Outer)))//Loop thru each styles on current skin
+            {
+                if (styles.Type == styleTarget.TargetStyleType)
+                {
+                    bool Found = false;
+                    switch (styleTarget.styleType)
+                    {
+                        case StyleType.Part:
+                            {
+                                if (styles.Properties.PartOptions != null)
+                                {
+                                    int partCount = styles.Properties.PartOptions.Count();
+                                    foreach (var style in styles.Properties.PartOptions)
+                                    {
+                                        if (!Found && partCount >= styleTarget.TargetStyleAmount)
+                                        {
+                                            if (GetStyle(currentSkin.Key, styles.Properties.VariantChannelTag.TagName, styleTarget.TargetStyleIndex, partCount, out Style outstyle))
+                                                styleList.Add(outstyle);
+
+                                            Found = true;
+                                        }
+
+                                    }
+                                }
+
+                                break;
+                            }
+
+                        case StyleType.Material:
+                            {
+                                if (styles.Properties.MaterialOptions != null)
+                                {
+                                    int matCount = styles.Properties.MaterialOptions.Count();
+                                    foreach (var style in styles.Properties.MaterialOptions)
+                                    {
+                                        if (!Found && matCount >= styleTarget.TargetStyleAmount)
+                                        {
+                                            if (GetStyle(currentSkin.Key, styles.Properties.VariantChannelTag.TagName, styleTarget.TargetStyleIndex, matCount, out Style outstyle))
+                                                styleList.Add(outstyle);
+
+                                            Found = true;
+                                        }
+                                    }
+                                }
+
+                                break;
+                            }
+
+                        case StyleType.Particle:
+                         
+                            if (styles.Properties.ParticleOptions != null)
+                            {
+                                int particleCount = styles.Properties.ParticleOptions.Count();
+                                foreach (var style in styles.Properties.ParticleOptions)
+                                {
+                                if (!Found && particleCount >= styleTarget.TargetStyleAmount)
+                                {
+                                   if (GetStyle(currentSkin.Key,styles.Properties.VariantChannelTag.TagName, styleTarget.TargetStyleIndex, particleCount,out Style outstyle))
+                                            styleList.Add(outstyle);
+
+                                        Found = true;
+                                }
+                                
+                        }
+                            }
+                            
+                        break;
+                    }
+                }
+               
+            }
+        }
+
+
+
+        //foreach (var skinkeypair in AllSkins.data.Where(x => x.Value.Length > 1))//Only get skins with styles
+        //{
+        //    if (skinkeypair.Key == WantStyle.Item.id)
+        //        continue;//Skip the same skin because we can't swap a skin with itself
+
+        //    foreach (var style in skinkeypair.Value.Where(x => !string.IsNullOrEmpty(x.Outer)))//Loop thru all styles on specified skin
+        //    {
+        //        var item = main.skinObj.data.First(x => x.id.Equals(skinkeypair.Key));//Set the skin object
+        //        if (item.id.Length < WantStyle.Item.id.Length)
+        //            continue;
+
+
+
+        //        if (style.Properties.PartOptions != null && style.Type == styleTarget.TargetStyleType && /*style.Properties.PartOptions.Length >= styleTarget.TargetStyleAmount &&*/ style.Properties.VariantChannelTag.TagName == styleTarget.TargetChannelTag)//If the skin has the same style typed & has same or more style count
+        //        {
+        //            foreach (var currentVariant in item.variants)//Loop through current skin's variants
+        //            {
+        //                foreach (var option in currentVariant.options)//Loop through current skin's variant's options
+        //                {
+        //                    if (option.name == style.Properties.PartOptions[styleTarget.TargetStyleIndex].VariantName.SourceString && option.tag == styleTarget.TargetStyleTag)//If the specified variant option is found
+        //                    {
+        //                        styleList.Add(new Style(item, currentVariant, option));
+        //                    }
+        //                }
+        //            }
+        //        }
+        //        else if (style.Properties.MaterialOptions != null && style.Type == styleTarget.TargetStyleType && style.Properties.MaterialOptions.Length >= styleTarget.TargetStyleAmount && style.Properties.VariantChannelTag.TagName == styleTarget.TargetChannelTag)
+        //        {
+        //            foreach (var currentVariant in item.variants)//Loop through current skin's variants
+        //            {
+        //                foreach (var option in currentVariant.options)//Loop through current skin's variant's options
+        //                {
+        //                    if (option.name == style.Properties.MaterialOptions[styleTarget.TargetStyleIndex].VariantName.SourceString && option.tag == styleTarget.TargetStyleTag)//If the specified variant option is found
+        //                    {
+        //                        styleList.Add(new Style(item, currentVariant, option));
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+        //}
+        return styleList.ToArray();
+    }
+
+    void SelectStyle(Style style)
+    {
+        SelectedStyle = style;
+        selectionMode = SelectionMode.StyleCompatible;
+    }
+    void SetSkins(Style skin)
+    {
+        Skins.SwapsToSkin = SelectedStyle.Item;
+        Skins.SwapsFromSkin = skin.Item;
+        NavManager.NavigateTo($"/lobbyswapper?type=Skins&FromStyle=true");
+    }
+
+    protected override void OnInitialized()
+    {
+        selectionMode = SelectionMode.StyleSelect;
+        SelectedStyle = null;
+    }
+}

@@ -12,11 +12,21 @@ namespace ProSwapperLobby.SwapperLogic
 
         private const string AssetRegFile = "pakchunk0-WindowsClient";
 
-        public static DefaultFileProvider GetProvider(string folderPath)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="folderPath"></param>
+        /// <param name="LoadSpecific">Load only a specific file by name without extension</param>
+        /// <returns></returns>
+        public static DefaultFileProvider GetProvider(string folderPath, string[] LoadSpecific = null)
         {
+            if (LoadSpecific == null)
+                LoadSpecific = new[] { "."};
+
             var Provider = new DefaultFileProvider(folderPath, SearchOption.TopDirectoryOnly, false, new VersionContainer(EGame.GAME_UE5_1));
             Provider.Initialize();
-            foreach (var vfs in Provider.UnloadedVfs)
+
+            foreach (var vfs in Provider.UnloadedVfs.Where(x => LoadSpecific.Any(x.Name.Contains)))
             {
                 Provider.SubmitKey(vfs.EncryptionKeyGuid, MainService.CurrentConfig.aesKey);
             }
@@ -52,7 +62,7 @@ namespace ProSwapperLobby.SwapperLogic
             }
         }
 
-        public static bool LobbySwap(SkinObj.Datum SwapsFrom, SkinObj.Datum SwapsTo, bool Converting = false)
+        public static bool LobbySwap(SkinObj.Datum SwapsFrom, SkinObj.Datum SwapsTo, bool Converting, ref Exception ex)
         {
             try
             {
@@ -97,6 +107,7 @@ namespace ProSwapperLobby.SwapperLogic
                 var provider = GetProvider(LobbyPaksPath);
                 byte[] SearchCID = Encoding.Default.GetBytes(SwapsFrom.id + "." + SwapsFrom.id);
                 SearchCID_s = SwapsFrom.id + "." + SwapsFrom.id;
+
 
                 if (provider.TrySaveAsset("FortniteGame/AssetRegistry.bin", out byte[] _))
                 {
@@ -151,8 +162,9 @@ namespace ProSwapperLobby.SwapperLogic
                 }
                 return false;
             }
-            catch
+            catch (Exception exc)
             {
+                exc = ex;
                 return false;
             }
         }
