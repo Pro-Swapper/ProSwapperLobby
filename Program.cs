@@ -19,7 +19,7 @@ public class Program
     public static void Main(string[] args)
     {
 #if RELEASE
-        if (!File.Exists(ClientExe))
+        if (!File.Exists("aspnetcorev2_inprocess.dll"))
         {
             Console.Clear();
             Console.WriteLine("Please extract Pro Swapper Lobby.zip to a folder instead of doubling clicking it inside a zipping program.");

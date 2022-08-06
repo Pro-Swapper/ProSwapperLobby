@@ -58,7 +58,7 @@ namespace ProSwapperLobby.Services
         public const string CLIENT_SECRET = "SmfsDIL-_SdC7FWvLF8hk1IsD_vML6C4";
         public const string REDIRECT_URI = "http://localhost:5000";
         public static string GuildID => MainService.DiscordWidgetAPI.id;
-        public static string[] TargetRoles = { "7094847781555405121" };
+        public static string[] TargetRoles = { "709484778155540512" };
 
         private static HttpListener _httpListener = new HttpListener();
 
