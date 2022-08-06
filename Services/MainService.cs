@@ -12,8 +12,9 @@ namespace ProSwapperLobby.Services
     {
         public static readonly HttpClient client = new HttpClient();
         public static string version = Assembly.GetEntryAssembly().GetName().Version.ToString().Substring(0, 5);
-        private const string FortniteAPIURL = "https://fortnite-api.com/v2";
+
         public static DiscordWidgetAPI.Root DiscordWidgetAPI { get; set; }
+        public static Data.API.Rootobject ProSwapperAPI { get; set; }
 
 
         #region FortniteItemAPIInstances
@@ -29,7 +30,7 @@ namespace ProSwapperLobby.Services
             get
             {
                 if (_skinObj == null)
-                    _skinObj = MsgPacklz4<SkinObj.Root>($"{FortniteAPIURL}/cosmetics/br/search/all?backendType=AthenaCharacter&responseOptions=ignore_null&responseFormat=msgpack_lz4");
+                    _skinObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaCharacter&responseOptions=ignore_null&responseFormat=msgpack_lz4");
                 return _skinObj;
             }
         }
@@ -39,7 +40,7 @@ namespace ProSwapperLobby.Services
             get
             {
                 if (_backblingObj == null)
-                    _backblingObj = MsgPacklz4<SkinObj.Root>($"{FortniteAPIURL}/cosmetics/br/search/all?backendType=AthenaBackpack&responseOptions=ignore_null&responseFormat=msgpack_lz4");
+                    _backblingObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaBackpack&responseOptions=ignore_null&responseFormat=msgpack_lz4");
                 return _backblingObj;
             }
         }
@@ -48,7 +49,7 @@ namespace ProSwapperLobby.Services
             get
             {
                 if (_emotesObj == null)
-                    _emotesObj = MsgPacklz4<SkinObj.Root>($"{FortniteAPIURL}/cosmetics/br/search/all?backendType=AthenaDance&responseOptions=ignore_null&responseFormat=msgpack_lz4");
+                    _emotesObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaDance&responseOptions=ignore_null&responseFormat=msgpack_lz4");
                 return _emotesObj;
             }
         }
@@ -58,7 +59,7 @@ namespace ProSwapperLobby.Services
             get
             {
                 if (_pickaxeObj == null)
-                    _pickaxeObj = MsgPacklz4<SkinObj.Root>($"{FortniteAPIURL}/cosmetics/br/search/all?backendType=AthenaPickaxe&responseOptions=ignore_null&responseFormat=msgpack_lz4");
+                    _pickaxeObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaPickaxe&responseOptions=ignore_null&responseFormat=msgpack_lz4");
                 return _pickaxeObj;
             }
         }
@@ -68,7 +69,7 @@ namespace ProSwapperLobby.Services
             get
             {
                 if (_musicObj == null)
-                    _musicObj = MsgPacklz4<SkinObj.Root>($"{FortniteAPIURL}/cosmetics/br/search/all?backendType=AthenaMusicPack&responseOptions=ignore_null&responseFormat=msgpack_lz4");
+                    _musicObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaMusicPack&responseOptions=ignore_null&responseFormat=msgpack_lz4");
                 return _musicObj;
             }
         }
@@ -77,7 +78,7 @@ namespace ProSwapperLobby.Services
             get
             {
                 if (_gliderObj == null)
-                    _gliderObj = MsgPacklz4<SkinObj.Root>($"{FortniteAPIURL}/cosmetics/br/search/all?backendType=AthenaGlider&responseOptions=ignore_null&responseFormat=msgpack_lz4");
+                    _gliderObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaGlider&responseOptions=ignore_null&responseFormat=msgpack_lz4");
                 return _gliderObj;
             }
         }
@@ -93,21 +94,7 @@ namespace ProSwapperLobby.Services
 
         #endregion
 
-        /// <summary>
-        /// Input a url which responds with msgpack compressed in lz4, responds with json object which is 'T'
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="url"></param>
-        /// <returns></returns>
-        public static T MsgPacklz4<T>(string url)
-        {
-            Stream responseBody = client.GetStreamAsync(url).Result;
-            var lz4Options = MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4BlockArray);
-            var AllCosmeticsLz4 = MessagePackSerializer.Deserialize<dynamic>(responseBody, lz4Options);
-            string json = MessagePackSerializer.SerializeToJson(AllCosmeticsLz4, lz4Options);
-            return JsonConvert.DeserializeObject<T>(json);
 
-        }
 
 
         /// <summary>
@@ -134,38 +121,15 @@ namespace ProSwapperLobby.Services
             }
         }
 
-        public class AESResponse
-        {
-            public class Root
-            {
-                public int status { get; set; }
-                public Data data { get; set; }
-            }
-
-            public class Data
-            {
-                public string build { get; set; }
-                public string mainKey { get; set; }
-                public Dynamickey[] dynamicKeys { get; set; }
-                public DateTime updated { get; set; }
-            }
-
-            public class Dynamickey
-            {
-                public string pakFilename { get; set; }
-                public string pakGuid { get; set; }
-                public string key { get; set; }
-            }
-        }
-
 
         #region ConfigHandler
 
-        private static string ConfigPath => ProSwapperFolder + @".Config\" + version + "_config.json";
+        private static string ConfigPath => ProSwapperFolder + @"ProSwapperLobby\" + version + "_config.json";
 
         public static ConfigObj CurrentConfig;
         public static void InitConfig()
         {
+            Directory.CreateDirectory(ProSwapperFolder + @"ProSwapperLobby\");
             if (!File.Exists(ConfigPath))
                 File.WriteAllText(ConfigPath, JsonConvert.SerializeObject(new ConfigObj()), System.Text.Encoding.Unicode);
             CurrentConfig = JsonConvert.DeserializeObject<ConfigObj>(File.ReadAllText(ConfigPath));
@@ -173,18 +137,15 @@ namespace ProSwapperLobby.Services
         public static void SaveConfig() => File.WriteAllText(ConfigPath, JsonConvert.SerializeObject(CurrentConfig), System.Text.Encoding.Unicode);
 
 
-        private static FAesKey _aesKey { get; set; } = null;
         private static string _Paks { get; set; } = null;
-        private static string _fnVer { get; set; } = null;
-        private static AESResponse.Root aesResponse { get; set; } = null;
-
-
-
 
         public class ConfigObj
         {
             public List<SwapLogs> swaplogs { get; set; } = new List<SwapLogs>();
 
+            public string Key { get; set; } = "";
+            public Services.TokenResponse.Root OAuthToken { get; set; } = null;//Uses Discord OAuth2
+            public bool AskIfServerBooster { get; set; } = true;
             public string Paks
             {
                 get
@@ -203,21 +164,7 @@ namespace ProSwapperLobby.Services
 
                 }
             }
-            public FAesKey? aesKey
-            {
-                get
-                {       
-                    if (aesResponse == null)
-                        aesResponse = MsgPacklz4<AESResponse.Root>($"{FortniteAPIURL}/aes?responseFormat=msgpack_lz4&responseOptions=ignore_null");
-
-                    if (aesResponse.data.mainKey != null && _aesKey == null)
-                    {
-                        _aesKey = new FAesKey(aesResponse.data.mainKey);
-                    }
-                       
-                    return _aesKey;
-                }
-            }
+            public FAesKey? aesKey => FortniteAPI.GetCurrentAESKey();
 
             public string CurrentInstalledFortniteVersion
             {
@@ -228,20 +175,10 @@ namespace ProSwapperLobby.Services
                         return SwapperLogic.EpicGamesLauncher.GetCurrentInstalledFortniteVersion();
                     }
                     catch { return null; }
-
                 }
             }
 
-            public string CurrentLiveFortniteVersion
-            {
-                get
-                {
-                    if (aesResponse == null)
-                        aesResponse = MsgPacklz4<AESResponse.Root>($"{FortniteAPIURL}/aes?responseFormat=msgpack_lz4&responseOptions=ignore_null");
-
-                    return aesResponse.data.build;
-                }
-            }
+            public string CurrentLiveFortniteVersion => FortniteAPI.GetCurrentFortniteVersion();
         }
 
         #endregion

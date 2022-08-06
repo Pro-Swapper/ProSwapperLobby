@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProSwapperLobby", "ProSwapperLobby.csproj", "{11824F3D-DAAF-4FB9-8276-67077661C328}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProSwapperLobby.Client", "..\ProSwapperLobby.Client\ProSwapperLobby.Client.csproj", "{551EBD94-FFDD-4A13-81C0-82A919AA0F82}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{11824F3D-DAAF-4FB9-8276-67077661C328}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{11824F3D-DAAF-4FB9-8276-67077661C328}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{11824F3D-DAAF-4FB9-8276-67077661C328}.Release|Any CPU.Build.0 = Release|Any CPU
+		{551EBD94-FFDD-4A13-81C0-82A919AA0F82}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{551EBD94-FFDD-4A13-81C0-82A919AA0F82}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{551EBD94-FFDD-4A13-81C0-82A919AA0F82}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{551EBD94-FFDD-4A13-81C0-82A919AA0F82}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

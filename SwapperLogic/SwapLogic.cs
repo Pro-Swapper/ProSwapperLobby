@@ -21,11 +21,11 @@ namespace ProSwapperLobby.SwapperLogic
         public static DefaultFileProvider GetProvider(string folderPath, string[] LoadSpecific = null)
         {
             if (LoadSpecific == null)
-                LoadSpecific = new[] { "."};
+                LoadSpecific = new[] { "." };
 
             var Provider = new DefaultFileProvider(folderPath, SearchOption.TopDirectoryOnly, false, new VersionContainer(EGame.GAME_UE5_1));
             Provider.Initialize();
-
+            //Provider.LoadMappings(); Don't need mappings for asset reg
             foreach (var vfs in Provider.UnloadedVfs.Where(x => LoadSpecific.Any(x.Name.Contains)))
             {
                 Provider.SubmitKey(vfs.EncryptionKeyGuid, MainService.CurrentConfig.aesKey);
@@ -66,7 +66,7 @@ namespace ProSwapperLobby.SwapperLogic
         {
             try
             {
-                
+
 
 
                 string LobbyPaksPath = Path.Combine(Services.MainService.CurrentConfig.Paks, ProSwapperLobby);
@@ -108,6 +108,8 @@ namespace ProSwapperLobby.SwapperLogic
                 byte[] SearchCID = Encoding.Default.GetBytes(SwapsFrom.id + "." + SwapsFrom.id);
                 SearchCID_s = SwapsFrom.id + "." + SwapsFrom.id;
 
+
+                byte[] a = provider.SaveAsset("FortniteGame/AssetRegistry.bin");
 
                 if (provider.TrySaveAsset("FortniteGame/AssetRegistry.bin", out byte[] _))
                 {

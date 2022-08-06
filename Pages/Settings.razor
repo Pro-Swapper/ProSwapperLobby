@@ -1,18 +1,23 @@
-﻿@using static Services.MainService
+﻿@page "/settings"
+@namespace ProSwapperLobby
+@using System.Diagnostics
+@using static Services.MainService
 
-@page "/about"
 
-<h3>About</h3>
+<h3>Settings</h3>
 
-<ul class="list-group">
-  <li class="list-group-item">Current AES Key: @CurrentConfig.aesKey</li>
+
+
+<ul class="list-group ">
+  <li class="list-group-item">Current AES Key: <span style="font-family:Consolas">@CurrentConfig.aesKey</span></li>
   <li class="list-group-item">Current Installed Fortnite Version: @CurrentConfig.CurrentInstalledFortniteVersion</li>
   <li class="list-group-item">Current Live Fortnite Version: @CurrentConfig.CurrentLiveFortniteVersion</li>
   <li class="list-group-item">Fortnite Up To Date: @FnUpdated</li>
 </ul>
 
-
-
+<br />
+<button class="btn btn-primary" @onclick=LaunchFortnite>Launch Fortnite</button>
+<br />
 <br />
 <h4>Developer(s)</h4>
 <div class="our-team" style="width:25vw">
@@ -137,6 +142,12 @@
 </style>
 
 @code {
-    private bool FnUpdated = CurrentConfig.CurrentLiveFortniteVersion == CurrentConfig.CurrentInstalledFortniteVersion;
+    private bool FnUpdated => CurrentConfig.CurrentLiveFortniteVersion.Contains(CurrentConfig.CurrentInstalledFortniteVersion);
 
+    private void LaunchFortnite()
+    {
+        Process webProcess = new Process();
+        webProcess.StartInfo = new ProcessStartInfo() { UseShellExecute = true, FileName = "com.epicgames.launcher://apps/fn:4fe75bbc5a674f4f9b356b5c90567da5:Fortnite?action=launch&silent=false" };
+        webProcess.Start();
+    }
 }
