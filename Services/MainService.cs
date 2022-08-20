@@ -8,93 +8,73 @@ using CUE4Parse.Encryption.Aes;
 
 namespace ProSwapperLobby.Services
 {
-    public class MainService
+    public static class MainService
     {
-        public static readonly HttpClient client = new HttpClient();
+        public static readonly HttpClient httpClient = new();
         public static string version = Assembly.GetEntryAssembly().GetName().Version.ToString().Substring(0, 5);
 
         public static DiscordWidgetAPI.Root DiscordWidgetAPI { get; set; }
         public static Data.API.Rootobject ProSwapperAPI { get; set; }
 
-
-        #region FortniteItemAPIInstances
-        private static SkinObj.Root _skinObj { get; set; } = null;
-        private static SkinObj.Root _backblingObj { get; set; } = null;
-        private static SkinObj.Root _emotesObj { get; set; } = null;
-        private static SkinObj.Root _pickaxeObj { get; set; } = null;
-        private static SkinObj.Root _musicObj { get; set; } = null;
-        private static SkinObj.Root _gliderObj { get; set; } = null;
-        private static AllSkinsJson.Root _GameSkin { get; set; } = null;
-        public SkinObj.Root skinObj
+        public enum ItemType
         {
-            get
-            {
-                if (_skinObj == null)
-                    _skinObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaCharacter&responseOptions=ignore_null&responseFormat=msgpack_lz4");
-                return _skinObj;
-            }
+            AthenaCharacter,
+            AthenaBackpack,
+            AthenaDance,
+            AthenaPickaxe,
+            AthenaMusicPack,
+            AthenaGlider,
+            BannerToken
         }
 
-        public SkinObj.Root backblingObj
+        public static SkinObj.Root _allData { get; set; } = null;
+        public static IEnumerable<SkinObj.Datum> GetItemByType(ItemType type)
         {
-            get
+            if (_allData == null)
+                _allData = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br?responseOptions=ignore_null&responseFormat=msgpack_lz4");
+
+            string ItemType = type.ToString();
+            foreach (var item in _allData.data)
             {
-                if (_backblingObj == null)
-                    _backblingObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaBackpack&responseOptions=ignore_null&responseFormat=msgpack_lz4");
-                return _backblingObj;
-            }
-        }
-        public SkinObj.Root emotesObj
-        {
-            get
-            {
-                if (_emotesObj == null)
-                    _emotesObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaDance&responseOptions=ignore_null&responseFormat=msgpack_lz4");
-                return _emotesObj;
+                if (item.type.backendValue == ItemType)
+                    yield return item;
             }
         }
 
-        public SkinObj.Root pickaxeObj
+        public static string ItemTypeToString(ItemType item)
         {
-            get
+            switch (item)
             {
-                if (_pickaxeObj == null)
-                    _pickaxeObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaPickaxe&responseOptions=ignore_null&responseFormat=msgpack_lz4");
-                return _pickaxeObj;
+                case ItemType.AthenaCharacter: return "Skin";
+                case ItemType.AthenaBackpack: return "Backbling";
+                case ItemType.AthenaDance: return "Emote";
+                case ItemType.AthenaPickaxe: return "Pickaxe";
+                case ItemType.AthenaMusicPack: return "Music";
+                case ItemType.AthenaGlider: return "Glider";
+                case ItemType.BannerToken: return "Banner";
+                default: return "Item";
             }
         }
 
-        public SkinObj.Root musicObj
+        public static ItemType StringToItemType(string item)
         {
-            get
+            switch (item)
             {
-                if (_musicObj == null)
-                    _musicObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaMusicPack&responseOptions=ignore_null&responseFormat=msgpack_lz4");
-                return _musicObj;
-            }
-        }
-        public SkinObj.Root gliderObj
-        {
-            get
-            {
-                if (_gliderObj == null)
-                    _gliderObj = MessagePack.MsgPacklz4<SkinObj.Root>($"{FortniteAPI.FortniteAPIcomBaseURL}/cosmetics/br/search/all?backendType=AthenaGlider&responseOptions=ignore_null&responseFormat=msgpack_lz4");
-                return _gliderObj;
+                case "Skin": return ItemType.AthenaCharacter;
+                case "Backbling": return ItemType.AthenaBackpack;
+                case "Emote": return ItemType.AthenaDance;
+                case "Pickaxe": return ItemType.AthenaPickaxe;
+                case "Music": return ItemType.AthenaMusicPack;
+                case "Glider": return ItemType.AthenaGlider;
+                default: return ItemType.AthenaCharacter;
             }
         }
 
 
-        public AllSkinsJson.Root AllSkins()
-        {
-            if (_GameSkin == null)
-                _GameSkin = DataMine.GetAllSkins();
-
-            return _GameSkin;
-        }
-
-        #endregion
+        public static AllSkinsJson.Root GameSkin => DataMine.GetAllSkins();
 
 
+        //public static SkinObj.Root GetItems()
 
 
         /// <summary>

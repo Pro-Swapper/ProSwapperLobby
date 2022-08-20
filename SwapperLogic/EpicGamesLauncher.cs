@@ -18,7 +18,7 @@ namespace ProSwapperLobby.SwapperLogic
         {
             public List<InstallationList> InstallationList { get; set; }
         }
-        public static string FindPakFiles()=> JsonSerializer.Deserialize<Root>(File.ReadAllText(LauncherPath)).InstallationList.First(x => x.AppName.Equals("Fortnite")).InstallLocation + @"\FortniteGame\Content\Paks";
-        public static string GetCurrentInstalledFortniteVersion()=> JsonSerializer.Deserialize<Root>(File.ReadAllText(LauncherPath)).InstallationList.First(x => x.AppName.Equals("Fortnite")).AppVersion;
+        public static string FindPakFiles() => JsonSerializer.Deserialize<Root>(File.ReadAllText(LauncherPath)).InstallationList.First(x => x.AppName.Equals("Fortnite")).InstallLocation + @"\FortniteGame\Content\Paks";
+        public static string GetCurrentInstalledFortniteVersion() => JsonSerializer.Deserialize<Root>(File.ReadAllText(LauncherPath)).InstallationList.First(x => x.AppName.Equals("Fortnite")).AppVersion;
     }
 }

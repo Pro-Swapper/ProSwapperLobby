@@ -1,5 +1,4 @@
 ﻿@page "/stylesearch"
-@inject MainService main
 @inject NavigationManager NavManager
 <h3>Style Search</h3>
 
@@ -88,7 +87,7 @@
             //    return null;
 
             List<Style> styleList = new();
-            foreach (Data.SkinObj.Datum item in main.skinObj.data)
+            foreach (Data.SkinObj.Datum item in MainService.GetItemByType(MainService.ItemType.AthenaCharacter))
             {
 
                 if (item.variants == null)
@@ -212,7 +211,7 @@
     bool GetStyle(string cid, string channel, int index, int styleCount, out Style style)
     {
         style = null;
-        var skin = main.skinObj.data.Where(x => x.variants != null).First(x => x.id.Equals(cid));//Set the skin object
+        var skin = MainService.GetItemByType(MainService.ItemType.AthenaCharacter).Where(x => x.variants != null).First(x => x.id.Equals(cid));//Set the skin object
 
         foreach (var currentVariant in skin.variants)//Loop through current skin's variants
         {
@@ -234,7 +233,7 @@
 
     Style[] FindCompatibleStyle(Style WantStyle)
     {
-        Data.AllSkinsJson.Root AllSkins = main.AllSkins();
+        Data.AllSkinsJson.Root AllSkins = MainService.GameSkin;
 
         Data.AllSkinsJson.Value[] WantSkin = AllSkins.data.First(x => x.Key.Equals(WantStyle.Item.id)).Value;
 
