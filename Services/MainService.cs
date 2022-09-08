@@ -118,7 +118,7 @@ namespace ProSwapperLobby.Services
 
 
         private static string _Paks { get; set; } = null;
-
+        public static FAesKey? _aesKey => FortniteAPI.GetCurrentAESKey();
         public class ConfigObj
         {
             public List<SwapLogs> swaplogs { get; set; } = new List<SwapLogs>();
@@ -144,8 +144,6 @@ namespace ProSwapperLobby.Services
 
                 }
             }
-            public FAesKey? aesKey => FortniteAPI.GetCurrentAESKey();
-
             public string CurrentInstalledFortniteVersion
             {
                 get
@@ -159,6 +157,7 @@ namespace ProSwapperLobby.Services
             }
 
             public string CurrentLiveFortniteVersion => FortniteAPI.GetCurrentFortniteVersion();
+            public string AesKeySource = null;
         }
 
         #endregion

@@ -28,7 +28,7 @@ namespace ProSwapperLobby.SwapperLogic
             //Provider.LoadMappings(); Don't need mappings for asset reg
             foreach (var vfs in Provider.UnloadedVfs.Where(x => LoadSpecific.Any(x.Name.Contains)))
             {
-                Provider.SubmitKey(vfs.EncryptionKeyGuid, MainService.CurrentConfig.aesKey);
+                Provider.SubmitKey(vfs.EncryptionKeyGuid, MainService._aesKey);
             }
             return Provider;
         }
