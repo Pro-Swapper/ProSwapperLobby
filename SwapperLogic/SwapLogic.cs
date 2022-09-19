@@ -4,6 +4,8 @@ using CUE4Parse.UE4.Versions;
 using ProSwapperLobby.Data;
 using System.Text;
 using ProSwapperLobby.Services;
+using CUE4Parse.Compression;
+
 namespace ProSwapperLobby.SwapperLogic
 {
     public static class SwapLogic
@@ -34,20 +36,22 @@ namespace ProSwapperLobby.SwapperLogic
         }
 
 
-        public static ZlibBlock zlibblock = null;
+        public static AssetRegBlock assetRegBlock = null;
         public static string SearchCID_s = null;
-        public class ZlibBlock
+        public class AssetRegBlock
         {
             public long BlockStart { get; set; }
             public long BlockEnd { get; set; }
             public byte[] decompressed { get; set; }
-            public byte[] compressed { get; set; }
-            public ZlibBlock(long start, long end, byte[] decomp, byte[] comp)
+            public int compressedLength { get; set; }
+            public CompressionMethod compressionMethod { get; set; }
+            public AssetRegBlock(long BlockStart, long BlockEnd, byte[] decompressed, int compressedLength, CompressionMethod compressionMethod)
             {
-                BlockStart = start;
-                BlockEnd = end;
-                decompressed = decomp;
-                compressed = comp;
+                this.BlockStart = BlockStart;
+                this.BlockEnd = BlockEnd;
+                this.decompressed = decompressed;
+                this.compressedLength = compressedLength;
+                this.compressionMethod = compressionMethod;
             }
         }
 
@@ -64,109 +68,113 @@ namespace ProSwapperLobby.SwapperLogic
 
         public static bool LobbySwap(SkinObj.Datum SwapsFrom, SkinObj.Datum SwapsTo, bool Converting, ref Exception ex)
         {
-            try
+            string LobbyPaksPath = Path.Combine(Services.MainService.CurrentConfig.Paks, ProSwapperLobby);
+            string OriginalFilePath = $"{Services.MainService.CurrentConfig.Paks}\\{AssetRegFile}";
+            string ModifiedFilePath = $"{Services.MainService.CurrentConfig.Paks}\\{ProSwapperLobby}\\{AssetRegFile}";
+
+            string OriginalSig = Hashing.FileToMd5($"{OriginalFilePath}.sig");
+            string ModifiedSig = Hashing.FileToMd5($"{ModifiedFilePath}.sig");
+
+            if (OriginalSig != ModifiedSig)
             {
+                //Revert lobby swaps all
 
-
-
-                string LobbyPaksPath = Path.Combine(Services.MainService.CurrentConfig.Paks, ProSwapperLobby);
-                string OriginalFilePath = $"{Services.MainService.CurrentConfig.Paks}\\{AssetRegFile}";
-                string ModifiedFilePath = $"{Services.MainService.CurrentConfig.Paks}\\{ProSwapperLobby}\\{AssetRegFile}";
-
-                string OriginalSig = Hashing.FileToMd5($"{OriginalFilePath}.sig");
-                string ModifiedSig = Hashing.FileToMd5($"{ModifiedFilePath}.sig");
-
-                if (OriginalSig != ModifiedSig)
+                if (Directory.Exists(LobbyPaksPath))
                 {
-                    //Revert lobby swaps all
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    Directory.Delete(LobbyPaksPath, true);
+                }
+            }
 
-                    if (Directory.Exists(LobbyPaksPath))
+            if (!File.Exists($"{ModifiedFilePath}.pak"))
+            {
+                Directory.CreateDirectory($"{Services.MainService.CurrentConfig.Paks}\\{ProSwapperLobby}");
+
+                string[] ue5fileExtensions = new string[] { "pak", "sig", "ucas", "utoc" };
+
+                foreach (var extension in ue5fileExtensions)
+                {
+                    File.Copy($"{OriginalFilePath}.{extension}", $"{ModifiedFilePath}.{extension}");
+                }
+            }
+
+
+
+
+
+            var provider = GetProvider(LobbyPaksPath);
+            byte[] SearchCID = Encoding.Default.GetBytes(SwapsFrom.id + "." + SwapsFrom.id);
+            SearchCID_s = SwapsFrom.id + "." + SwapsFrom.id;
+
+
+            //provider.SaveAsset("FortniteGame/AssetRegistry.bin");
+
+            if (provider.TrySaveAsset("FortniteGame/AssetRegistry.bin", out byte[] assetReg))
+            {
+#if DEBUG
+                File.WriteAllBytes("AssetRegistry.bin", assetReg);
+#endif
+
+                provider.Dispose();
+                if (assetRegBlock != null)
+                {
+                    //Edit file
+                    byte[] searchB = SearchCID;
+                    byte[] replaceB = Encoding.Default.GetBytes(SwapsTo.id + "." + SwapsTo.id);
+
+
+                    if (searchB.Length >= replaceB.Length)//Converting
                     {
-                        GC.Collect();
-                        GC.WaitForPendingFinalizers();
-                        Directory.Delete(LobbyPaksPath, true);
+                        FillEnd(ref replaceB, searchB.Length);
+
+
+                        byte[] EditedAsset = EditAsset(assetRegBlock.decompressed, searchB, replaceB);
+
+                        //Compress zlib
+                        byte[] compressed = AssetRegistryCompression.Compress(EditedAsset, assetRegBlock.compressionMethod);
+                        FillEnd(ref compressed, assetRegBlock.compressedLength);
+                        //Write to pakchunk0
+                        using (FileStream PakEditor = new FileStream($"{ModifiedFilePath}.pak", FileMode.Open, FileAccess.ReadWrite))
+                        {
+                            PakEditor.Position = assetRegBlock.BlockStart;
+                            PakEditor.Write(compressed, 0, compressed.Length);
+                        }
+                        return true;
+                    }
+                    else if (Converting == false)//Reverting
+                    {
+                        FillEnd(ref searchB, replaceB.Length);
+
+                        byte[] EditedAsset = EditAsset(assetRegBlock.decompressed, searchB, replaceB);
+
+                        //Compress zlib
+                        byte[] compressed = AssetRegistryCompression.Compress(EditedAsset, assetRegBlock.compressionMethod);
+                        FillEnd(ref compressed, assetRegBlock.compressedLength);
+                        //Write to pakchunk0
+                        using (FileStream PakEditor = new FileStream($"{ModifiedFilePath}.pak", FileMode.Open, FileAccess.ReadWrite))
+                        {
+                            PakEditor.Position = assetRegBlock.BlockStart;
+                            PakEditor.Write(compressed, 0, compressed.Length);
+                        }
+                        return true;
+                    }
+                    else
+                    {
+                        ex = new Exception($"Odd error");
+                        return false;
                     }
                 }
-
-                if (!File.Exists($"{ModifiedFilePath}.pak"))
+                else
                 {
-                    Directory.CreateDirectory($"{Services.MainService.CurrentConfig.Paks}\\{ProSwapperLobby}");
-
-                    string[] ue5fileExtensions = new string[] { "pak", "sig", "ucas", "utoc" };
-
-                    foreach (var extension in ue5fileExtensions)
-                    {
-                        File.Copy($"{OriginalFilePath}.{extension}", $"{ModifiedFilePath}.{extension}");
-                    }
-                }
-
-
-
-
-
-                var provider = GetProvider(LobbyPaksPath);
-                byte[] SearchCID = Encoding.Default.GetBytes(SwapsFrom.id + "." + SwapsFrom.id);
-                SearchCID_s = SwapsFrom.id + "." + SwapsFrom.id;
-
-
-                byte[] a = provider.SaveAsset("FortniteGame/AssetRegistry.bin");
-
-                if (provider.TrySaveAsset("FortniteGame/AssetRegistry.bin", out byte[] _))
-                {
-                    provider.Dispose();
-                    if (zlibblock != null)
-                    {
-                        //Edit file
-                        byte[] searchB = SearchCID;
-                        byte[] replaceB = Encoding.Default.GetBytes(SwapsTo.id + "." + SwapsTo.id);
-
-
-                        if (searchB.Length >= replaceB.Length)
-                        {
-                            FillEnd(ref replaceB, searchB.Length);
-
-                            byte[] EditedAsset = zlibblock.decompressed;
-
-                            EditedAsset = EditAsset(EditedAsset, searchB, replaceB);
-
-                            //Compress zlib
-                            byte[] compressed = AssetRegistryCompression.Compress(EditedAsset);
-                            FillEnd(ref compressed, zlibblock.compressed.Length);
-                            //Write to pakchunk0
-                            using (FileStream PakEditor = new FileStream($"{ModifiedFilePath}.pak", FileMode.Open, FileAccess.ReadWrite))
-                            {
-                                PakEditor.Position = zlibblock.BlockStart;
-                                PakEditor.Write(compressed, 0, compressed.Length);
-                            }
-                            return true;
-                        }
-                        else if (Converting == false)
-                        {
-                            FillEnd(ref searchB, replaceB.Length);
-
-                            byte[] EditedAsset = zlibblock.decompressed;
-
-                            EditedAsset = EditAsset(EditedAsset, searchB, replaceB);
-
-                            //Compress zlib
-                            byte[] compressed = AssetRegistryCompression.Compress(EditedAsset);
-                            FillEnd(ref compressed, zlibblock.compressed.Length);
-                            //Write to pakchunk0
-                            using (FileStream PakEditor = new FileStream($"{ModifiedFilePath}.pak", FileMode.Open, FileAccess.ReadWrite))
-                            {
-                                PakEditor.Position = zlibblock.BlockStart;
-                                PakEditor.Write(compressed, 0, compressed.Length);
-                            }
-                            return true;
-                        }
-                    }
+                    ex = new Exception($"Could not find {SearchCID_s} in the Asset Registry.");
                     return false;
                 }
-                return false;
+
             }
-            catch (Exception exc)
+            else
             {
-                exc = ex;
+                ex = new Exception($"Could not export Asset Registry");
                 return false;
             }
         }

@@ -157,7 +157,7 @@ namespace ProSwapperLobby.Services
             }
 
             public string CurrentLiveFortniteVersion => FortniteAPI.GetCurrentFortniteVersion();
-            public string AesKeySource = null;
+            public string AesKeySource = "Fortnite Central";
         }
 
         #endregion
