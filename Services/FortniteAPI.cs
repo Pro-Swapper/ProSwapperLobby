@@ -8,15 +8,13 @@ namespace ProSwapperLobby.Services
         public const string FortniteAPIcomBaseURL = "https://fortnite-api.com/v2";
         public const string FortniteCentralBaseURL = "https://fortnitecentral.gmatrixgames.ga/api/v1";
 
-        private static FAesKey _aesKey = null;
         private static string Version = null;
 
         public static FAesKey GetCurrentAESKey()
         {
-            if (_aesKey == null)
+            switch (MainService.CurrentConfig.AesKeySource)
             {
-                try
-                {
+                case "Fortnite-API.com":
                     string aesKey = FortniteAPIcom.AESResponse.GetData().data.mainKey;
                     if (aesKey != null && aesKey.Length > 0)
                         return new FAesKey(aesKey);
@@ -24,31 +22,38 @@ namespace ProSwapperLobby.Services
                     {
                         throw new Exception("Fortnite-api.com's AES Key was invalid");
                     }
-                }
-                catch { }
 
-                try
-                {
-                    string aesKey = FortniteCentral.Rootobject.GetData().mainKey;
-                    if (aesKey != null && aesKey.Length > 0)
-                        return new FAesKey(aesKey);
-                }
-                catch { }
+                    break;
 
-
-                //This AES Key will not work but we dont want the user to have any errors
-                return new FAesKey(new string('0', 64));
+                case "Fortnite Central":
+                    string fnCentralAES = FortniteCentral.Rootobject.GetData().mainKey;
+                    if (fnCentralAES != null && fnCentralAES.Length > 0)
+                        return new FAesKey(fnCentralAES);
+                    break;
             }
-            else
-            {
-                return _aesKey;
-            }
+
+
+            //This AES Key will not work but we dont want the user to have any errors
+            return new FAesKey(new string('0', 64));
         }
 
         public static string GetCurrentFortniteVersion()
         {
             if (Version == null)
             {
+
+                try
+                {
+                    string build = FortniteCentral.Rootobject.GetData().version;
+                    if (build != null && build.Length > 0)
+                        return build;
+                }
+                catch
+                {
+
+                    throw new Exception("Fortnite Central's Fortnite Version was invalid");
+                }
+
                 try
                 {
                     string build = FortniteAPIcom.AESResponse.GetData().data.build;
@@ -61,13 +66,7 @@ namespace ProSwapperLobby.Services
                 }
                 catch { }
 
-                try
-                {
-                    string build = FortniteCentral.Rootobject.GetData().version;
-                    if (build != null && build.Length > 0)
-                        return build;
-                }
-                catch { }
+
 
 
                 //This AES Key will not work but we dont want the user to have any errors

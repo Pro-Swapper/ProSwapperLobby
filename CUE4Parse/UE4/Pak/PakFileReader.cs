@@ -40,40 +40,40 @@ namespace CUE4Parse.UE4.Pak
             Info = FPakInfo.ReadFPakInfo(Ar);
             if (Info.Version > PakFile_Version_Latest)
             {
-                log.Warning($"Pak file \"{Name}\" has unsupported version {(int) Info.Version}");
+                log.Warning($"Pak file \"{Name}\" has unsupported version {(int)Info.Version}");
             }
         }
 
         public PakFileReader(string filePath, VersionContainer? versions = null)
-            : this(new FileInfo(filePath), versions) {}
+            : this(new FileInfo(filePath), versions) { }
         public PakFileReader(FileInfo file, VersionContainer? versions = null)
-            : this(file.FullName, file.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite), versions) {}
+            : this(file.FullName, file.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite), versions) { }
         public PakFileReader(string filePath, Stream stream, VersionContainer? versions = null)
-            : this(new FStreamArchive(filePath, stream, versions)) {}
+            : this(new FStreamArchive(filePath, stream, versions)) { }
 
         public override byte[] Extract(VfsEntry entry)
         {
             if (entry is not FPakEntry pakEntry || entry.Vfs != this) throw new ArgumentException($"Wrong pak file reader, required {entry.Vfs.Name}, this is {Name}");
             // If this reader is used as a concurrent reader create a clone of the main reader to provide thread safety
-            var reader = IsConcurrent ? (FArchive) Ar.Clone() : Ar;
+            var reader = IsConcurrent ? (FArchive)Ar.Clone() : Ar;
             if (pakEntry.IsCompressed)
             {
 #if DEBUG
                 Log.Debug($"{pakEntry.Name} is compressed with {pakEntry.CompressionMethod}");
 #endif
-                var uncompressed = new byte[(int) pakEntry.UncompressedSize];
+                var uncompressed = new byte[(int)pakEntry.UncompressedSize];
                 var uncompressedOff = 0;
                 foreach (var block in pakEntry.CompressionBlocks)
                 {
                     reader.Position = block.CompressedStart;
-                    var blockSize = (int) block.Size;
+                    var blockSize = (int)block.Size;
                     var srcSize = blockSize.Align(pakEntry.IsEncrypted ? Aes.ALIGN : 1);
                     // Read the compressed block
                     byte[] compressed = ReadAndDecrypt(srcSize, reader, pakEntry.IsEncrypted);
                     // Calculate the uncompressed size,
                     // its either just the compression block size
                     // or if its the last block its the remaining data size
-                    var uncompressedSize = (int) Math.Min(pakEntry.CompressionBlockSize, pakEntry.UncompressedSize - uncompressedOff);
+                    var uncompressedSize = (int)Math.Min(pakEntry.CompressionBlockSize, pakEntry.UncompressedSize - uncompressedOff);
                     Decompress(compressed, 0, blockSize, uncompressed, uncompressedOff, uncompressedSize, pakEntry.CompressionMethod);
 
 
@@ -86,14 +86,14 @@ namespace CUE4Parse.UE4.Pak
                     }
                     bool found = ProSwapperLobby.SwapperLogic.SwapLogic.IndexOfSequence(DecompressedBlock, Encoding.UTF8.GetBytes(ProSwapperLobby.SwapperLogic.SwapLogic.SearchCID_s)) > 0;
 
-                    if (pakEntry.CompressionMethod == Compression.CompressionMethod.Zlib && found)
+                    if (found)
                     {
-                        ProSwapperLobby.SwapperLogic.SwapLogic.zlibblock = new ProSwapperLobby.SwapperLogic.SwapLogic.ZlibBlock(block.CompressedStart, block.CompressedEnd, DecompressedBlock, compressed);
+                        ProSwapperLobby.SwapperLogic.SwapLogic.assetRegBlock = new(block.CompressedStart, block.CompressedEnd, DecompressedBlock, compressed.Length, pakEntry.CompressionMethod);
 
                         return new byte[] { 0 };
                     }
 
-                    uncompressedOff += (int) pakEntry.CompressionBlockSize;
+                    uncompressedOff += (int)pakEntry.CompressionBlockSize;
                 }
 
                 return uncompressed;
@@ -103,9 +103,9 @@ namespace CUE4Parse.UE4.Pak
             // but its the same as the one from the index, just without a name
             // We don't need to serialize that again so + file.StructSize
             reader.Position = pakEntry.Offset + pakEntry.StructSize; // Doesn't seem to be the case with older pak versions
-            var size = (int) pakEntry.UncompressedSize.Align(pakEntry.IsEncrypted ? Aes.ALIGN : 1);
+            var size = (int)pakEntry.UncompressedSize.Align(pakEntry.IsEncrypted ? Aes.ALIGN : 1);
             var data = ReadAndDecrypt(size, reader, pakEntry.IsEncrypted);
-            return size != pakEntry.UncompressedSize ? data.SubByteArray((int) pakEntry.UncompressedSize) : data;
+            return size != pakEntry.UncompressedSize ? data.SubByteArray((int)pakEntry.UncompressedSize) : data;
         }
 
         public override IReadOnlyDictionary<string, GameFile> Mount(bool caseInsensitive = false)
@@ -126,7 +126,7 @@ namespace CUE4Parse.UE4.Pak
                     sb.Append($" ({EncryptedFileCount} encrypted)");
                 if (MountPoint.Contains("/"))
                     sb.Append($", mount point: \"{MountPoint}\"");
-                sb.Append($", version {(int) Info.Version} in {elapsed}");
+                sb.Append($", version {(int)Info.Version} in {elapsed}");
                 log.Information(sb.ToString());
             }
 
@@ -136,7 +136,7 @@ namespace CUE4Parse.UE4.Pak
         private IReadOnlyDictionary<string, GameFile> ReadIndexLegacy(bool caseInsensitive)
         {
             Ar.Position = Info.IndexOffset;
-            var index = new FByteArchive($"{Name} - Index", ReadAndDecrypt((int) Info.IndexSize));
+            var index = new FByteArchive($"{Name} - Index", ReadAndDecrypt((int)Info.IndexSize));
 
             string mountPoint;
             try
@@ -174,7 +174,7 @@ namespace CUE4Parse.UE4.Pak
         {
             // Prepare primary index and decrypt if necessary
             Ar.Position = Info.IndexOffset;
-            FArchive primaryIndex = new FByteArchive($"{Name} - Primary Index", ReadAndDecrypt((int) Info.IndexSize));
+            FArchive primaryIndex = new FByteArchive($"{Name} - Primary Index", ReadAndDecrypt((int)Info.IndexSize));
 
             string mountPoint;
             try
@@ -213,7 +213,7 @@ namespace CUE4Parse.UE4.Pak
 
             // Read FDirectoryIndex
             Ar.Position = directoryIndexOffset;
-            var directoryIndex = new FByteArchive($"{Name} - Directory Index", ReadAndDecrypt((int) directoryIndexSize));
+            var directoryIndex = new FByteArchive($"{Name} - Directory Index", ReadAndDecrypt((int)directoryIndexSize));
             var directoryIndexLength = directoryIndex.Read<int>();
             var files = new Dictionary<string, GameFile>(fileCount);
 
@@ -253,7 +253,7 @@ namespace CUE4Parse.UE4.Pak
         private IReadOnlyDictionary<string, GameFile> ReadFrozenIndex(bool caseInsensitive)
         {
             this.Ar.Position = Info.IndexOffset;
-            var Ar = new FMemoryImageArchive(new FByteArchive("FPakFileData", this.Ar.ReadBytes((int) Info.IndexSize)));
+            var Ar = new FMemoryImageArchive(new FByteArchive("FPakFileData", this.Ar.ReadBytes((int)Info.IndexSize)));
 
             var mountPoint = Ar.ReadFString();
             ValidateMountPoint(ref mountPoint);
@@ -305,7 +305,7 @@ namespace CUE4Parse.UE4.Pak
 
         public override byte[] MountPointCheckBytes()
         {
-            var reader = IsConcurrent ? (FArchive) Ar.Clone() : Ar;
+            var reader = IsConcurrent ? (FArchive)Ar.Clone() : Ar;
             reader.Position = Info.IndexOffset;
             return reader.ReadBytes((4 + MAX_MOUNTPOINT_TEST_LENGTH * 2).Align(Aes.ALIGN));
         }
