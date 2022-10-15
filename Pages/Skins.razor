@@ -285,7 +285,7 @@ else if (curSelect == SelectionMode.SkinSelect)
 
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="ID"></param>
     /// <param name="Longer">If true returns skins longer than the length, false does the opposite</param>
@@ -388,8 +388,8 @@ else if (curSelect == SelectionMode.SkinSelect)
                         yield return ItemSource[i];
                 }
 
-                }
             }
+        }
     }
 
     enum SelectionMode
@@ -440,8 +440,8 @@ else if (curSelect == SelectionMode.SkinSelect)
         {
             DisableButtons = true;
             await InvokeAsync(StateHasChanged);
-            Exception ex = new Exception("");
-            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsFromSkin, SwapsToSkin, true, ref ex));
+            string errorMsg = string.Empty;
+            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsFromSkin, SwapsToSkin, true, ref errorMsg));
             if (Swapped)
             {
                 toastService.ShowSuccess($"Succesfully converted {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]");
@@ -450,7 +450,7 @@ else if (curSelect == SelectionMode.SkinSelect)
             }
             else
             {
-                toastService.ShowError($"[Log] ERROR converting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap.{ex.Message}");
+                toastService.ShowError($"[Log] ERROR converting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap.{errorMsg}");
             }
             DisableButtons = false;
             await InvokeAsync(StateHasChanged);
@@ -469,8 +469,8 @@ else if (curSelect == SelectionMode.SkinSelect)
         {
             DisableButtons = true;
             await InvokeAsync(StateHasChanged);
-            Exception ex = new Exception("");
-            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsToSkin, SwapsFromSkin, false, ref ex));
+            string errorMsg = string.Empty;
+            bool Swapped = await Task.Run(() => ProSwapperLobby.SwapperLogic.SwapLogic.LobbySwap(SwapsToSkin, SwapsFromSkin, false, ref errorMsg));
             if (Swapped)
             {
                 toastService.ShowSuccess($"Succesfully reverted {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]");
@@ -479,7 +479,7 @@ else if (curSelect == SelectionMode.SkinSelect)
             }
             else
             {
-                toastService.ShowError($"[Log] ERROR reverting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap.{ex.Message}");
+                toastService.ShowError($"[Log] ERROR reverting {SwapsFromSkin.name} To {SwapsToSkin.name} [Lobby]. It may be already converted, click \"Reset All Lobby Swaps\" and reswap. {errorMsg}");
             }
             DisableButtons = false;
             await InvokeAsync(StateHasChanged);

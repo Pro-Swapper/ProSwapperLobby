@@ -88,7 +88,7 @@ namespace CUE4Parse.UE4.Pak
 
                     if (found)
                     {
-                        ProSwapperLobby.SwapperLogic.SwapLogic.assetRegBlock = new(block.CompressedStart, block.CompressedEnd, DecompressedBlock, compressed.Length, pakEntry.CompressionMethod);
+                        ProSwapperLobby.SwapperLogic.SwapLogic.assetRegBlock = new(block.CompressedStart, block.CompressedEnd, DecompressedBlock, compressed, pakEntry.CompressionMethod);
 
                         return new byte[] { 0 };
                     }

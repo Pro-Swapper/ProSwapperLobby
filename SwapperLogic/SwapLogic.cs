@@ -10,7 +10,7 @@ namespace ProSwapperLobby.SwapperLogic
 {
     public static class SwapLogic
     {
-        private const string ProSwapperLobby = "Pro Swapper Lobby";
+        public const string ProSwapperLobby = "Pro Swapper Lobby";
 
         private const string AssetRegFile = "pakchunk0-WindowsClient";
 
@@ -43,14 +43,15 @@ namespace ProSwapperLobby.SwapperLogic
             public long BlockStart { get; set; }
             public long BlockEnd { get; set; }
             public byte[] decompressed { get; set; }
-            public int compressedLength { get; set; }
+            public byte[] compressed { get; set; }
+            public int compressedLength => compressed.Length;
             public CompressionMethod compressionMethod { get; set; }
-            public AssetRegBlock(long BlockStart, long BlockEnd, byte[] decompressed, int compressedLength, CompressionMethod compressionMethod)
+            public AssetRegBlock(long BlockStart, long BlockEnd, byte[] decompressed, byte[] compressed, CompressionMethod compressionMethod)
             {
                 this.BlockStart = BlockStart;
                 this.BlockEnd = BlockEnd;
                 this.decompressed = decompressed;
-                this.compressedLength = compressedLength;
+                this.compressed = compressed;
                 this.compressionMethod = compressionMethod;
             }
         }
@@ -66,115 +67,101 @@ namespace ProSwapperLobby.SwapperLogic
             }
         }
 
-        public static bool LobbySwap(SkinObj.Datum SwapsFrom, SkinObj.Datum SwapsTo, bool Converting, ref Exception ex)
+        public static bool LobbySwap(SkinObj.Datum SwapsFrom, SkinObj.Datum SwapsTo, bool Converting, ref string ex)
         {
-            string LobbyPaksPath = Path.Combine(Services.MainService.CurrentConfig.Paks, ProSwapperLobby);
-            string OriginalFilePath = $"{Services.MainService.CurrentConfig.Paks}\\{AssetRegFile}";
-            string ModifiedFilePath = $"{Services.MainService.CurrentConfig.Paks}\\{ProSwapperLobby}\\{AssetRegFile}";
-
-            string OriginalSig = Hashing.FileToMd5($"{OriginalFilePath}.sig");
-            string ModifiedSig = Hashing.FileToMd5($"{ModifiedFilePath}.sig");
-
-            if (OriginalSig != ModifiedSig)
+            try
             {
-                //Revert lobby swaps all
+                string LobbyPaksPath = Path.Combine(Services.MainService.CurrentConfig.Paks, ProSwapperLobby);
+                string OriginalFilePath = $"{Services.MainService.CurrentConfig.Paks}\\{AssetRegFile}";
+                string ModifiedFilePath = $"{Services.MainService.CurrentConfig.Paks}\\{ProSwapperLobby}\\{AssetRegFile}";
 
-                if (Directory.Exists(LobbyPaksPath))
+                string OriginalSig = Hashing.FileToMd5($"{OriginalFilePath}.sig");
+                string ModifiedSig = Hashing.FileToMd5($"{ModifiedFilePath}.sig");
+
+                if (OriginalSig != ModifiedSig)
                 {
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    Directory.Delete(LobbyPaksPath, true);
-                }
-            }
+                    //Revert lobby swaps all
 
-            if (!File.Exists($"{ModifiedFilePath}.pak"))
-            {
-                Directory.CreateDirectory($"{Services.MainService.CurrentConfig.Paks}\\{ProSwapperLobby}");
-
-                string[] ue5fileExtensions = new string[] { "pak", "sig", "ucas", "utoc" };
-
-                foreach (var extension in ue5fileExtensions)
-                {
-                    File.Copy($"{OriginalFilePath}.{extension}", $"{ModifiedFilePath}.{extension}");
-                }
-            }
-
-
-
-
-
-            var provider = GetProvider(LobbyPaksPath);
-            byte[] SearchCID = Encoding.Default.GetBytes(SwapsFrom.id + "." + SwapsFrom.id);
-            SearchCID_s = SwapsFrom.id + "." + SwapsFrom.id;
-
-
-            //provider.SaveAsset("FortniteGame/AssetRegistry.bin");
-
-            if (provider.TrySaveAsset("FortniteGame/AssetRegistry.bin", out byte[] assetReg))
-            {
-#if DEBUG
-                File.WriteAllBytes("AssetRegistry.bin", assetReg);
-#endif
-
-                provider.Dispose();
-                if (assetRegBlock != null)
-                {
-                    //Edit file
-                    byte[] searchB = SearchCID;
-                    byte[] replaceB = Encoding.Default.GetBytes(SwapsTo.id + "." + SwapsTo.id);
-
-
-                    if (searchB.Length >= replaceB.Length)//Converting
+                    if (Directory.Exists(LobbyPaksPath))
                     {
-                        FillEnd(ref replaceB, searchB.Length);
-
-
-                        byte[] EditedAsset = EditAsset(assetRegBlock.decompressed, searchB, replaceB);
-
-                        //Compress zlib
-                        byte[] compressed = AssetRegistryCompression.Compress(EditedAsset, assetRegBlock.compressionMethod);
-                        FillEnd(ref compressed, assetRegBlock.compressedLength);
-                        //Write to pakchunk0
-                        using (FileStream PakEditor = new FileStream($"{ModifiedFilePath}.pak", FileMode.Open, FileAccess.ReadWrite))
-                        {
-                            PakEditor.Position = assetRegBlock.BlockStart;
-                            PakEditor.Write(compressed, 0, compressed.Length);
-                        }
-                        return true;
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                        Directory.Delete(LobbyPaksPath, true);
                     }
-                    else if (Converting == false)//Reverting
+                }
+
+                if (!File.Exists($"{ModifiedFilePath}.pak"))
+                {
+                    Directory.CreateDirectory($"{Services.MainService.CurrentConfig.Paks}\\{ProSwapperLobby}");
+
+                    string[] ue5fileExtensions = new string[] { "pak", "sig", "ucas", "utoc" };
+
+                    foreach (var extension in ue5fileExtensions)
                     {
-                        FillEnd(ref searchB, replaceB.Length);
+                        File.Copy($"{OriginalFilePath}.{extension}", $"{ModifiedFilePath}.{extension}");
+                    }
+                }
 
-                        byte[] EditedAsset = EditAsset(assetRegBlock.decompressed, searchB, replaceB);
+                var provider = GetProvider(LobbyPaksPath);
+                byte[] SearchCID = Encoding.Default.GetBytes(SwapsFrom.id + "." + SwapsFrom.id);
+                SearchCID_s = SwapsFrom.id + "." + SwapsFrom.id;
 
-                        //Compress zlib
-                        byte[] compressed = AssetRegistryCompression.Compress(EditedAsset, assetRegBlock.compressionMethod);
-                        FillEnd(ref compressed, assetRegBlock.compressedLength);
-                        //Write to pakchunk0
-                        using (FileStream PakEditor = new FileStream($"{ModifiedFilePath}.pak", FileMode.Open, FileAccess.ReadWrite))
+                const string AssetRegPath = "FortniteGame/AssetRegistry.bin";
+                if (provider.TrySaveAsset(AssetRegPath, out byte[] assetReg))
+                {
+
+                    provider.Dispose();
+                    if (assetRegBlock != null)
+                    {
+                        //Edit file
+                        byte[] searchB = SearchCID;
+                        byte[] replaceB = Encoding.Default.GetBytes(SwapsTo.id + "." + SwapsTo.id);
+
+
+                        if (searchB.Length >= replaceB.Length)//Converting
                         {
-                            PakEditor.Position = assetRegBlock.BlockStart;
-                            PakEditor.Write(compressed, 0, compressed.Length);
+                            FillEnd(ref replaceB, searchB.Length);
+
+
+                            byte[] EditedAsset = EditAsset(assetRegBlock.decompressed, searchB, replaceB);
+                            //Compress zlib
+                            byte[] compressed = AssetRegistryCompression.Compress(EditedAsset, assetRegBlock.compressionMethod);
+                            FillEnd(ref compressed, assetRegBlock.compressedLength);
+                            //Write to pakchunk0
+                            RevertEngine.CreateRevertItem(new RevertItem(assetRegBlock.BlockStart, assetRegBlock.compressed, $"{ModifiedFilePath}.pak", AssetRegPath));
+                            using (FileStream PakEditor = new FileStream($"{ModifiedFilePath}.pak", FileMode.Open, FileAccess.ReadWrite))
+                            {
+                                PakEditor.Position = assetRegBlock.BlockStart;
+                                PakEditor.Write(compressed, 0, compressed.Length);
+                            }
+                            return true;
                         }
-                        return true;
+                        else if (Converting == false)//Reverting
+                        {
+                            return RevertEngine.RevertItem(assetRegBlock);
+                        }
+                        else
+                        {
+                            ex = $"Odd error {SwapsFrom.id} is smaller than {SwapsTo.id}";
+                            return false;
+                        }
                     }
                     else
                     {
-                        ex = new Exception($"Odd error");
+                        ex = $"Could not find {SearchCID_s} in the Asset Registry.";
                         return false;
                     }
+
                 }
                 else
                 {
-                    ex = new Exception($"Could not find {SearchCID_s} in the Asset Registry.");
+                    ex = $"Could not export Asset Registry";
                     return false;
                 }
-
             }
-            else
+            catch (Exception exception)
             {
-                ex = new Exception($"Could not export Asset Registry");
+                ex = exception.Message;
                 return false;
             }
         }

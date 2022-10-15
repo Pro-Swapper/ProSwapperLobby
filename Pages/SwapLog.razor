@@ -1,6 +1,8 @@
 ﻿@page "/swaplogs"
 @inject IToastService toastService
 
+<PageTitle>Pro Swapper Lobby | Swap Log</PageTitle>
+
 <h3>Current Swapped Items (Lobby)</h3>
 
 @if (ProSwapperLobby.Services.MainService.CurrentConfig.swaplogs.Count() == 0)
@@ -11,14 +13,14 @@ else
 {
 
     <ul class="list-group">
-    @foreach (var item in ProSwapperLobby.Services.MainService.CurrentConfig.swaplogs)
-    {
-       <button type="button" class="list-group-item list-group-item-action" style="width:50vw">@item.SwapFrom.name (@item.SwapFrom.id) To @item.SwapTo.name (@item.SwapTo.id) (Lobby)</button>
-    }
+        @foreach (var item in ProSwapperLobby.Services.MainService.CurrentConfig.swaplogs)
+        {
+            <button type="button" class="list-group-item list-group-item-action" style="width:50vw">@item.SwapFrom.name (@item.SwapFrom.id) To @item.SwapTo.name (@item.SwapTo.id) (Lobby)</button>
+        }
     </ul>
     <button class="convert revertcolor" style="position:fixed;left:20%;bottom:0" @onclick="() => ResetAll()">Reset All Lobby Items</button>
-    
-    
+
+
 }
 
 
@@ -89,7 +91,7 @@ else
             opacity: 1;
             transition: 0.7s;
         }
-        </Style>
+</Style>
 @code {
 
 

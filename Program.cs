@@ -1,12 +1,24 @@
 using Blazored.Toast;
 using Newtonsoft.Json;
+using ProSwapperLobby;
 using ProSwapperLobby.Data;
 using ProSwapperLobby.Services;
+using Serilog;
 using System.Diagnostics;
-
+using System.Runtime.InteropServices;
 
 public class Program
 {
+    [DllImport("kernel32.dll")]
+    static extern IntPtr GetConsoleWindow();
+
+    [DllImport("user32.dll")]
+    static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    const int SW_HIDE = 0;
+    const int SW_SHOW = 5;
+
+
     private static void OpenUrl(string url)
     {
         Process webProcess = new Process();
@@ -14,22 +26,47 @@ public class Program
         webProcess.Start();
     }
 
+
+
+
     /// <summary>
     /// Kills all proccesses with the same name that is not the current process.
     /// </summary>
     private static void KillDuplicates()
     {
         Process thisProc = Process.GetCurrentProcess();
-        Process[] procs = Process.GetProcessesByName(thisProc.ProcessName);
-        foreach (var proc in procs)
+        Log.Logger.Information($"Current Process is : {thisProc.ProcessName}, ID: {thisProc.Id}");
+        Process[] procs = Process.GetProcessesByName(thisProc.ProcessName).Where(x => !x.Id.Equals(thisProc.Id)).ToArray();
+        if (procs.Length == 0)
         {
-            if (proc.Id != thisProc.Id)
-                proc.Kill();
+            Log.Logger.Information("OK, No other duplicate processes were found!");
+            return;
+        }
+
+        foreach (Process proc in procs)
+        {
+            Log.Logger.Warning($"Duplicate process found: {proc.ProcessName}, ID: {proc.Id}, trying to kill");
+            try
+            {
+                proc.Kill(true);
+                Log.Logger.Warning($"Successfully killed {proc.Id}");
+            }
+            catch (Exception ex)
+            {
+                Log.Logger.Warning($"Could not kill {proc.Id}, Error: {ex.Message}");
+            }
         }
     }
 
     public static void Main()
     {
+
+        var handle = GetConsoleWindow();
+
+        // Hide
+        ShowWindow(handle, SW_HIDE);
+
+
 #if RELEASE
         if (!File.Exists("aspnetcorev2_inprocess.dll"))
         {
@@ -40,9 +77,20 @@ public class Program
             Process.GetCurrentProcess().Kill();
         }
 #endif
+        string LobbyLogsFolder = Path.Combine(MainService.ProSwapperFolder, "Logs", "ProSwapperLobby.log");
+
+        if (File.Exists(LobbyLogsFolder))
+            File.Delete(LobbyLogsFolder);
+
+
+        Log.Logger = new LoggerConfiguration()
+        .WriteTo.Console()
+        .WriteTo.File(LobbyLogsFolder, rollingInterval: RollingInterval.Infinite, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Message:lj}{NewLine}{Exception}")
+        .CreateLogger();
+        Log.Logger.Information("Starting Pro Swapper Lobby");
 
         string url = "http://localhost:6969/";
-
+        Log.Logger.Information("Trying to kill duplicate processes of self");
         KillDuplicates();
 
         var builder = WebApplication.CreateBuilder();
@@ -72,7 +120,7 @@ public class Program
 
         string data = MainService.httpClient.GetStringAsync("https://pro-swapper.github.io/api/LobbyAPI.json").Result;
 
-        MainService.ProSwapperAPI = JsonConvert.DeserializeObject<ProSwapperLobby.Data.API.Rootobject>(data);
+        MainService.ProSwapperAPI = JsonConvert.DeserializeObject<API.Rootobject>(data);
 
         if (MainService.ProSwapperAPI.Disable == true)
         {
@@ -99,7 +147,13 @@ public class Program
 
         Console.WriteLine("Welcome to Pro Swapper Lobby!");
         Console.WriteLine("You will be directed to linkvertise so you can access Pro Swapper Lobby, leave Pro Swapper Lobby opened if you don't want to go through linkvertise again.");
-        OpenUrl("https://direct-link.net/86737/pro-swapper-lobby2");
+
+        string ProgramFilesX86Folder = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+        Browser Edge = new Browser(ProgramFilesX86Folder + @"\Microsoft\Edge\Application\msedge.exe");
+        //Edge.OpenWebsite("https://direct-link.net/86737/pro-swapper-lobby2");
+        Edge.OpenWebsite(url);
+
         app.Run(url);
+        Console.WriteLine("a");
     }
 }

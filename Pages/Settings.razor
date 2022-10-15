@@ -2,17 +2,17 @@
 @namespace ProSwapperLobby
 @using System.Diagnostics
 @using static Services.MainService
+@inject IToastService toastService
 
-
+<PageTitle>Pro Swapper Lobby | Settings</PageTitle>
 <h3>Settings</h3>
 
 
 
 <ul class="list-group ">
-    <li class="list-group-item">Current AES Key: <span style="font-family:Consolas">@MainService._aesKey</span></li>
+    <li class="list-group-item">Current AES Key: <span style="font-family:Consolas">@MainService._aesKey.ToString().ToUpper()</span></li>
     <li class="list-group-item">Current Installed Fortnite Version: @CurrentConfig.CurrentInstalledFortniteVersion</li>
     <li class="list-group-item">Current Live Fortnite Version: @CurrentConfig.CurrentLiveFortniteVersion</li>
-    @*<li class="list-group-item">Fortnite Up To Date: @FnUpdated</li>*@
 </ul>
 <br />
 <span>AES Key Source:</span>
@@ -26,7 +26,17 @@
 
 
 <br />
-<button class="btn btn-primary" @onclick=LaunchFortnite>Launch Fortnite</button>
+<style>
+    .filter-white {
+        filter: invert(100%) sepia(58%) saturate(1144%) hue-rotate(215deg) brightness(124%) contrast(108%);
+    }
+</style>
+
+<button class="btn btn-primary" @onclick=LaunchFortnite>
+    <img style="width:25px;height:25px" class="filter-white" src="/images/rocket-solid.svg" />
+    Launch Fortnite
+</button>
+<button class="btn btn-primary" @onclick=ResetAll><img style="width:25px;height:25px;margin-right:5px" class="filter-white" src="/images/rotate-right-solid.svg" />Reset All Lobby Items</button>
 <br />
 <br />
 <h4>Developer(s)</h4>
@@ -162,6 +172,12 @@
             MainService.CurrentConfig.AesKeySource = _aesKeySource = value;
             MainService.SaveConfig();
         }
+    }
+
+    private void ResetAll()
+    {
+        MainService.ResetAll();
+        toastService.ShowSuccess($"Reset all currently converted lobby items");
     }
 
     private bool FnUpdated => CurrentConfig.CurrentLiveFortniteVersion.Contains(CurrentConfig.CurrentInstalledFortniteVersion);
