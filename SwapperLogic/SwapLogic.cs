@@ -56,15 +56,24 @@ namespace ProSwapperLobby.SwapperLogic
             }
         }
 
-        public static void ResetAllSwaps()
+        public static bool ResetAllSwaps()
         {
-            string LobbyPaksPath = Path.Combine(Services.MainService.CurrentConfig.Paks, ProSwapperLobby);
-            if (Directory.Exists(LobbyPaksPath))
+            try
             {
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                Directory.Delete(LobbyPaksPath, true);
+                string LobbyPaksPath = Path.Combine(Services.MainService.CurrentConfig.Paks, ProSwapperLobby);
+                if (Directory.Exists(LobbyPaksPath))
+                {
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    Directory.Delete(LobbyPaksPath, true);
+                }
+                return true;
             }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
         }
 
         public static bool LobbySwap(SkinObj.Datum SwapsFrom, SkinObj.Datum SwapsTo, bool Converting, ref string ex)

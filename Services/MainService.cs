@@ -82,8 +82,11 @@ namespace ProSwapperLobby.Services
         /// </summary>
         public static void ResetAll()
         {
-            SwapperLogic.SwapLogic.ResetAllSwaps();
-            CurrentConfig.swaplogs.Clear();
+            if (SwapperLogic.SwapLogic.ResetAllSwaps())
+            {
+                CurrentConfig.swaplogs.Clear();
+            }
+
             SaveConfig();
         }
 
